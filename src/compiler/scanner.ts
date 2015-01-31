@@ -22,6 +22,7 @@ module ts {
         reScanSlashToken(): SyntaxKind;
         reScanTemplateToken(): SyntaxKind;         
         setInJSXChild(inJSXChild: boolean): void;
+        setInJSXTag(inJSXTag: boolean): void;
         scan(): SyntaxKind;
         setText(text: string): void;
         setTextPos(textPos: number): void;
@@ -548,6 +549,7 @@ module ts {
         var precedingLineBreak: boolean;
         var tokenIsUnterminated: boolean;
         var inJSXChild: boolean;
+        var inJSXTag: boolean;
 
         function error(message: DiagnosticMessage, length?: number): void {
             if (onError) {
@@ -556,12 +558,25 @@ module ts {
         }
 
         function isIdentifierStart(ch: number): boolean {
+            if (inJSXTag) {
+                if  (ch === CharacterCodes.backslash) {
+                    return false;
+                }
+            }
+            
             return ch >= CharacterCodes.A && ch <= CharacterCodes.Z || ch >= CharacterCodes.a && ch <= CharacterCodes.z ||
                 ch === CharacterCodes.$ || ch === CharacterCodes._ ||
                 ch > CharacterCodes.maxAsciiCharacter && isUnicodeIdentifierStart(ch, languageVersion);
         }
 
         function isIdentifierPart(ch: number): boolean {
+            if (inJSXTag) {
+                if  (ch === CharacterCodes.backslash) {
+                    return false;
+                } else if (ch === CharacterCodes.minus) {
+                    return true;
+                }
+            }
             return ch >= CharacterCodes.A && ch <= CharacterCodes.Z || ch >= CharacterCodes.a && ch <= CharacterCodes.z ||
                 ch >= CharacterCodes._0 && ch <= CharacterCodes._9 || ch === CharacterCodes.$ || ch === CharacterCodes._ ||
                 ch > CharacterCodes.maxAsciiCharacter && isUnicodeIdentifierPart(ch, languageVersion);
@@ -822,7 +837,7 @@ module ts {
                 if (isIdentifierPart(ch)) {
                     pos++;
                 }
-                else if (ch === CharacterCodes.backslash) {
+                else if (!inJSXTag && ch === CharacterCodes.backslash) {
                     ch = peekUnicodeEscape();
                     if (!(ch >= 0 && isIdentifierPart(ch))) {
                         break;
@@ -1194,7 +1209,7 @@ module ts {
                         return pos++, token = SyntaxKind.TildeToken;
                     case CharacterCodes.backslash:
                         var ch = peekUnicodeEscape();
-                        if (ch >= 0 && isIdentifierStart(ch)) {
+                        if (!inJSXTag && ch >= 0 && isIdentifierStart(ch)) {
                             pos += 6;
                             tokenValue = String.fromCharCode(ch) + scanIdentifierParts();
                             return token = getIdentifierToken();
@@ -1206,7 +1221,7 @@ module ts {
                             pos++;
                             while (pos < len && isIdentifierPart(ch = text.charCodeAt(pos))) pos++;
                             tokenValue = text.substring(tokenPos, pos);
-                            if (ch === CharacterCodes.backslash) {
+                            if (!inJSXTag && ch === CharacterCodes.backslash) {
                                 tokenValue += scanIdentifierParts();
                             }
                             return token = getIdentifierToken();
@@ -1228,6 +1243,10 @@ module ts {
             
         function setInJSXChild(val: boolean) {
             inJSXChild = val;
+        }
+        
+        function setInJSXTag(val: boolean) {
+            inJSXTag = val;
         }
         
         
@@ -1378,6 +1397,7 @@ module ts {
             reScanSlashToken,
             reScanTemplateToken,
             setInJSXChild,
+            setInJSXTag,
             scan,
             setText,
             setTextPos,

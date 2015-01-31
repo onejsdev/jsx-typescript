@@ -613,6 +613,13 @@ module ts {
             inJSXChild = val;
         }
         
+        var inJSXTag = false;
+    
+        function setInJSXTag(val: boolean): void {
+            scanner.setInJSXTag(val);
+            inJSXTag = val;
+        }
+        
         function parseSourceFile(text: string, setParentNodes: boolean): SourceFile {
             // Set our initial state before parsing.
             sourceText = text;
@@ -3396,9 +3403,11 @@ module ts {
         function parseJSXElement(): JSXElement {
             var node = <JSXElement>createNode(SyntaxKind.JSXElement);
             var savedInJSXChild = inJSXChild;
+            var savedInJSXTag = inJSXTag;
             
             setInJSXChild(false);
-            node.openingElement = parseJSXOpeningElement(savedInJSXChild);
+            setInJSXTag(true)
+            node.openingElement = parseJSXOpeningElement(savedInJSXChild, savedInJSXTag);
             if (node.openingElement.attributes.length) {
                 // if there is attribute it's pretty sure that we are in a JSXElement
                 node.isCertainlyJSXElement = true;
@@ -3411,7 +3420,8 @@ module ts {
                 
                 var tagName: string = entityNameToString(node.openingElement.tagName);
                 if (token === SyntaxKind.LessThanSlashToken) {
-                    node.closingElement = parseJSXClosingElement(savedInJSXChild, tagName);
+                    setInJSXTag(true);
+                    node.closingElement = parseJSXClosingElement(tagName, savedInJSXChild, savedInJSXTag);
                     // if there is a closing tag it's pretty sure that we are in a JSXElement
                     node.isCertainlyJSXElement = true;
                 } else {
@@ -3420,6 +3430,10 @@ module ts {
                         SyntaxKind.JSXClosingElement, /*reportAtCurrentPosition:*/ true, 
                         Diagnostics._0_expected, "<" + tagName + ">"
                     );
+                    //TODO we need to rewind the parser before the token, but normally here we
+                    // are at 'end of file' so it's not so important
+                    setInJSXTag(savedInJSXChild);
+                    setInJSXTag(savedInJSXTag);
                 }
                
             } else {
@@ -3437,18 +3451,20 @@ module ts {
         }
         
         
-        function parseJSXOpeningElement(savedInJSXChild: boolean): JSXOpeningElement {
+        function parseJSXOpeningElement(savedInJSXChild: boolean, savedInJSXTag: boolean): JSXOpeningElement {
             var node = <JSXOpeningElement>createNode(SyntaxKind.JSXOpeningElement);
             
             parseExpected(SyntaxKind.LessThanToken);
-            node.tagName = parseEntityName(false);
+            node.tagName = parseEntityName(true);
             node.attributes = parseList(ParsingContext.JSXAttributes, /*checkForStrictMode*/ false, parseJSXAttribute);
             if (token === SyntaxKind.SlashToken) {
                 node.isSelfClosing = true;
                 nextToken();
                 setInJSXChild(savedInJSXChild)
+                setInJSXTag(savedInJSXTag);
             } else {
                 setInJSXChild(true);
+                setInJSXTag(false);
             }
             parseExpected(SyntaxKind.GreaterThanToken);
             return finishNode(node);
@@ -3459,21 +3475,34 @@ module ts {
                 case SyntaxKind.LessThanToken:
                     return parseJSXElement();
                 case SyntaxKind.OpenBraceToken:
-                    return parseJSXExpression();
+                    return parseJSXExpression(true, false);
                 case SyntaxKind.JSXText:
                     return <JSXText>parseLiteralNode();
             }
             
         }
         
-        function parseJSXExpression(inJSXChild = true): JSXExpression {
+        function parseJSXExpression(inJSXChild: boolean, inJSXTag: boolean): JSXExpression {
             var node = <JSXExpression>createNode(SyntaxKind.JSXExpression)
             setInJSXChild(false);
+            setInJSXTag(false);
+            var isExpressionEmpty = lookAhead(() => {
+                do {
+                    nextToken();
+                    if (token === SyntaxKind.CloseBraceToken) {
+                        return true;
+                    } else if (!isTrivia(token)) {
+                        return false;
+                    }
+                } while(token != SyntaxKind.EndOfFileToken);
+                return true;
+            })
             parseExpected(SyntaxKind.OpenBraceToken)
-            if (token !== SyntaxKind.CloseBracketToken) {
+            if (!isExpressionEmpty) {
                 node.expression = parseExpression();
             }
             setInJSXChild(inJSXChild);
+            setInJSXTag(inJSXTag)
             parseExpected(SyntaxKind.CloseBraceToken)
             return node;
         }
@@ -3489,7 +3518,7 @@ module ts {
                         node.initializer = parseLiteralNode();
                         break;
                     default:
-                        node.initializer = parseJSXExpression(false);
+                        node.initializer = parseJSXExpression(false, true);
                         break;
                     
                 }
@@ -3497,16 +3526,17 @@ module ts {
             return finishNode(node);
         }
         
-        function parseJSXClosingElement(savedInJSXChild: boolean, tagName: string): JSXClosingElement {
+        function parseJSXClosingElement(tagName: string, savedInJSXChild: boolean, savedInJSXTag: boolean): JSXClosingElement {
             var node = <JSXClosingElement>createNode(SyntaxKind.JSXClosingElement);
             parseExpected(SyntaxKind.LessThanSlashToken);
             var start = scanner.getTokenPos();
-            node.tagName = parseEntityName(false);
+            node.tagName = parseEntityName(true);
             if (tagName !== entityNameToString(node.tagName)) {
                 var length = scanner.getTokenPos() - start;
                 parseErrorAtPosition(start, length, Diagnostics._0_expected, tagName);
             }
             setInJSXChild(savedInJSXChild);
+            setInJSXTag(savedInJSXTag);
             parseExpected(SyntaxKind.GreaterThanToken);
             return finishNode(node);
         }
