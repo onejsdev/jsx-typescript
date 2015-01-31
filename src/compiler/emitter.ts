@@ -2433,7 +2433,7 @@ module ts {
                 return attr;
             }
             
-            function emitJSXLiteral(literal: JSXText | StringLiteralExpression, isLast: boolean) {
+            function emitJSXLiteral(literal: JSXText | StringLiteralExpression, isLast: boolean, multiLine: boolean) {
                 var lines = literal.text.split(/\r\n|\n|\r/);
 
 //                if (start) {
@@ -2493,18 +2493,21 @@ module ts {
             }
             
             
-            function emitJSXElement(object: JSXElement) {
+            function emitJSXElement(node: JSXElement) {
                 //porting react
-                var openingElement = object.openingElement;
+                var openingElement = node.openingElement;
                 var nameObject = openingElement.tagName;
                 var attributes = openingElement.attributes;
+                var multiLine = (node.flags & NodeFlags.MultiLine) !== 0;
 
                 // We assume that the React runtime is already in scope
                 write('React.createElement(');
                 
-                increaseIndent();
-                writeLine();
-                // XJSMemberExpressions are not.
+                if (multiLine) {
+                    increaseIndent();
+                    writeLine();
+                }
+                
                 if (nameObject.kind === SyntaxKind.Identifier) {
                     var ident = (<Identifier>nameObject);
                     if (isTagName(ident.text)) {
@@ -2516,7 +2519,11 @@ module ts {
                     emitQualifiedName(<QualifiedName>nameObject);
                 }
                 write(',');
-                writeLine();
+                if (multiLine) {
+                    writeLine();
+                } else {
+                    write(' ');
+                }
 
                 var hasAttributes = attributes.length;
 
@@ -2531,8 +2538,12 @@ module ts {
                 
                 if (hasAttributes) {
                     write('{');
-                    increaseIndent();
-                    writeLine();
+                    if (multiLine) {
+                        increaseIndent();
+                        writeLine();
+                    } else {
+                        write(' ');
+                    }
                 } else {
                     write('null');
                 }
@@ -2583,9 +2594,9 @@ module ts {
                     var name = attr.name.text;
 
 
-//                    if (previousWasSpread) {
+//                 if (previousWasSpread) {
 //                      utils.append('{', state);
-//                    }
+//                 }
 
                     write(quoteAttrName(name));
                     write(': ');
@@ -2597,7 +2608,7 @@ module ts {
                         }
                     } else {
                         if (attr.initializer.kind === SyntaxKind.StringLiteral) {
-                            emitJSXLiteral(<StringLiteralExpression>attr.initializer, isLast);
+                            emitJSXLiteral(<StringLiteralExpression>attr.initializer, isLast, multiLine);
                         } else {
                             emitNode((<JSXExpression>attr.initializer).expression);
                             if (!isLast) {
@@ -2605,29 +2616,36 @@ module ts {
                             }
                         }
                     }
-                    writeLine();
+                
+                    if (multiLine) {
+                        writeLine();
+                    } else  {
+                        write(' ');
+                    }
 
 
-//                    previousWasSpread = false;
+//                  previousWasSpread = false;
 
                 });
 
 
                 if (hasAttributes /*&& !previousWasSpread*/) {
-                    decreaseIndent();
-                    writeLine();
+                    if (multiLine) {
+                        decreaseIndent();
+                        writeLine();
+                    }
                     write('}');
                 }
                 
 
-//                if (hasAtLeastOneSpreadProperty) {
-//                utils.append(')', state);
-//                }
+//              if (hasAtLeastOneSpreadProperty) {
+//                  utils.append(')', state);
+//              }
 
                 // filter out whitespace
                 var childrenToRender = (
-                    object.children && 
-                    object.children.filter(child => !(
+                    node.children && 
+                    node.children.filter(child => !(
                         child.kind === SyntaxKind.JSXText && 
                         typeof (<JSXText>child).text === 'string' && 
                         (<JSXText>child).text.match(/^[ \t]*[\r\n][ \t\r\n]*$/)
@@ -2645,7 +2663,11 @@ module ts {
 
                     if (lastRenderableIndex !== undefined) {
                         write(',');
-                        writeLine();
+                        if (multiLine) {
+                            writeLine();
+                        } else  {
+                            write(' ');
+                        }
                     }
 
                     childrenToRender.forEach(function(child, index) {
@@ -2653,7 +2675,7 @@ module ts {
                         var isLast = index >= lastRenderableIndex;
 
                         if (child.kind === SyntaxKind.JSXText) {
-                            emitJSXLiteral(<JSXText>child, isLast);
+                            emitJSXLiteral(<JSXText>child, isLast, multiLine);
                         } else if (child.kind === SyntaxKind.JSXExpression) {
                             emitNode((<JSXExpression>child).expression);
                             if (!isLast) {
@@ -2665,12 +2687,19 @@ module ts {
                                 write(',');
                             }
                         }
-                        writeLine();
+                        
+                        if (multiLine) {
+                            writeLine();
+                        } else  {
+                            write(' ');
+                        }
                     });
                 }
-
-                decreaseIndent();
-                writeLine();
+                
+                if (multiLine) {
+                    decreaseIndent();
+                    writeLine();
+                }
                 write(')');
             }
 

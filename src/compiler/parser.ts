@@ -3403,6 +3403,8 @@ module ts {
                 // if there is attribute it's pretty sure that we are in a JSXElement
                 node.isCertainlyJSXElement = true;
             }
+            
+            
             if (!node.openingElement.isSelfClosing) {
                 node.children = parseList(ParsingContext.JSXChildContext, /*checkForStrictMode*/ false, parseJSXChild);
                 setInJSXChild(false);
@@ -3424,8 +3426,14 @@ module ts {
                 // if there it is  a self closing tag it's pretty sure that we are in a JSXElement
                 node.isCertainlyJSXElement = true;
             }
+            finishNode(node);
             
-            return finishNode(node);
+            //It's complicate to use the scanner here, it's a trick but it works ...
+            var text = getSourceTextOfNodeFromSourceFile(sourceFile, node);
+            if (/\n|\r/g.test(text)) {
+                node.flags |= NodeFlags.MultiLine
+            }
+            return node;
         }
         
         
