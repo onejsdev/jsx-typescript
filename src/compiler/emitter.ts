@@ -2609,8 +2609,13 @@ module ts {
                     } else {
                         if (attr.initializer.kind === SyntaxKind.StringLiteral) {
                             emitJSXLiteral(<StringLiteralExpression>attr.initializer, isLast, multiLine);
-                        } else {
+                        } else if((attr.initializer.kind === SyntaxKind.JSXExpression)) {
                             emitNode((<JSXExpression>attr.initializer).expression);
+                            if (!isLast) {
+                                write(',');
+                            }
+                        } else {
+                            emitJSXElement(<JSXElement>attr.initializer);
                             if (!isLast) {
                                 write(',');
                             }
