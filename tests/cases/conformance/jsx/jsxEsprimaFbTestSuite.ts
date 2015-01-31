@@ -2,6 +2,7 @@ declare var 日本語;
 declare var AbC_def;
 declare var LeftRight;
 declare var x;
+declare var a;
 
 <a />;
 
