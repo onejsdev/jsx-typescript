@@ -3514,6 +3514,7 @@ module ts {
                 switch(token) {
                     case SyntaxKind.LessThanToken:
                         node.initializer = parseJSXElement();
+                        break;
                     case SyntaxKind.StringLiteral:
                         node.initializer = parseLiteralNode();
                         break;
