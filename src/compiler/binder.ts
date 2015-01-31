@@ -367,7 +367,7 @@ module ts {
             
             var saveParent = parent;
             var saveContainer = container;            
-            parent = jsxElement
+            parent = jsxElement;
             if (lastContainer) {
                 lastContainer.nextContainer = container;
             }
@@ -378,7 +378,10 @@ module ts {
             openingElement.parent = jsxElement;
             
             parent = openingElement;
-            bind(openingElement.tagName);
+            //in really rare case where the files is full of error and total mess it can fails
+            if (openingElement.tagName) {
+                bind(openingElement.tagName);
+            }
             parent = jsxElement;
             
             
@@ -413,8 +416,11 @@ module ts {
 
                 jsxElement.closingElement.parent = jsxElement;
 
-                parent =  jsxElement.closingElement
-                bind(jsxElement.closingElement.tagName);
+                parent =  jsxElement.closingElement;
+                //in really rare case where the files is full of error and total mess it can fails
+                if (jsxElement.closingElement.tagName) {
+                    bind(jsxElement.closingElement.tagName);
+                }
             }
             
             container = saveContainer;
