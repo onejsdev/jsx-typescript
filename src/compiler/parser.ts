@@ -263,6 +263,18 @@ module ts {
                 return visitNodes(cbNodes, (<HeritageClause>node).types);
             case SyntaxKind.ExternalModuleReference:
                 return visitNode(cbNode, (<ExternalModuleReference>node).expression);
+            case SyntaxKind.JSXElement:
+                return visitNode(cbNode, (<JSXElement>node).openingElement) ||
+                    visitNodes(cbNode, (<JSXElement>node).children) ||
+                    visitNode(cbNode, (<JSXElement>node).closingElement);
+            case SyntaxKind.JSXOpeningElement:
+                return visitNode(cbNode, (<JSXOpeningElement>node).tagName) || visitNodes(cbNode, (<JSXOpeningElement>node).attributes);
+            case SyntaxKind.JSXAttribute:
+                return visitNode(cbNode, (<JSXAttribute>node).name) || visitNode(cbNode, (<JSXAttribute>node).initializer);
+            case SyntaxKind.JSXExpression:
+                return visitNode(cbNode, (<JSXExpression>node).expression);        
+            case SyntaxKind.JSXClosingElement:
+                return visitNode(cbNode, (<JSXClosingElement>node).tagName); 
         }
     }
 
@@ -281,6 +293,8 @@ module ts {
         ArrayBindingElements,    // Binding elements in array binding list
         ArgumentExpressions,     // Expressions in argument list
         ObjectLiteralMembers,    // Members in object literal
+        JSXChildContext,         // Children of jsx element
+        JSXAttributes,           // Attributes in jsx element
         ArrayLiteralMembers,     // Members in array literal
         Parameters,              // Parameters in parameter list
         TypeParameters,          // Type parameters in type parameter list
@@ -318,6 +332,10 @@ module ts {
             case ParsingContext.TypeArguments:          return Diagnostics.Type_argument_expected;
             case ParsingContext.TupleElementTypes:      return Diagnostics.Type_expected;
             case ParsingContext.HeritageClauses:        return Diagnostics.Unexpected_token_expected;
+            case ParsingContext.JSXAttributes:          return Diagnostics.Identifier_expected;
+            case ParsingContext.JSXChildContext:        return Diagnostics.Expression_expected;
+                  //  return isIdentifier();
+                    //return token === SyntaxKind.OpenBraceToken || token === SyntaxKind.LessThanToken || token === SyntaxKind.JSXText
         }
     };
 
@@ -587,7 +605,14 @@ module ts {
         var sourceFile: SourceFile;
 
         return parseSourceFile(sourceText, setParentNodes);
-
+        
+        var inJSXChild = false;
+    
+        function setInJSXChild(val: boolean): void {
+            scanner.setInJSXChild(val);
+            inJSXChild = val;
+        }
+        
         function parseSourceFile(text: string, setParentNodes: boolean): SourceFile {
             // Set our initial state before parsing.
             sourceText = text;
@@ -1450,6 +1475,10 @@ module ts {
                     return token === SyntaxKind.CommaToken || isStartOfType();
                 case ParsingContext.HeritageClauses:
                     return isHeritageClause();
+                case ParsingContext.JSXAttributes:
+                    return isIdentifier();
+                case ParsingContext.JSXChildContext:
+                    return token === SyntaxKind.OpenBraceToken || token === SyntaxKind.LessThanToken || token === SyntaxKind.JSXText
             }
 
             Debug.fail("Non-exhaustive case in 'isListElement'.");
@@ -1511,6 +1540,10 @@ module ts {
                     return token === SyntaxKind.GreaterThanToken || token === SyntaxKind.OpenParenToken;
                 case ParsingContext.HeritageClauses:
                     return token === SyntaxKind.OpenBraceToken || token === SyntaxKind.CloseBraceToken;
+                case ParsingContext.JSXAttributes:
+                    return token === SyntaxKind.GreaterThanToken || token === SyntaxKind.SlashToken;
+                case ParsingContext.JSXChildContext:
+                    return token === SyntaxKind.LessThanSlashToken;
 
             }
         }
@@ -3214,7 +3247,7 @@ module ts {
                 case SyntaxKind.VoidKeyword:
                     return parseVoidExpression();
                 case SyntaxKind.LessThanToken:
-                    return parseTypeAssertion();
+                    return tryParseJSXElement() || parseTypeAssertion();
                 default:
                     return parsePostfixExpressionOrHigher();
             }
@@ -3339,6 +3372,134 @@ module ts {
             node.expression = expression;
             parseExpected(SyntaxKind.DotToken, Diagnostics.super_must_be_followed_by_an_argument_list_or_member_access);
             node.name = parseRightSideOfDot(/*allowIdentifierNames:*/ true);
+            return finishNode(node);
+        }
+        
+        function tryParseJSXElement(): JSXElement {
+            return tryParse(function ()  {
+                var jsxElement = parseJSXElement();
+                return jsxElement && jsxElement.isCertainlyJSXElement ? jsxElement : null;
+            });
+        }
+        
+        // Return display name of an identifier
+        function entityNameToString(entityName: EntityName) : string {
+            if (entityName.kind === SyntaxKind.Identifier) {
+                return (<Identifier>entityName).text;
+            } else {
+                var qualifiedName = <QualifiedName>entityName;
+                return entityNameToString(qualifiedName.left) + '.' + entityNameToString(qualifiedName.right);
+            }
+            return '(Missing)';
+        }
+        
+        function parseJSXElement(): JSXElement {
+            var node = <JSXElement>createNode(SyntaxKind.JSXElement);
+            var savedInJSXChild = inJSXChild;
+            
+            setInJSXChild(false);
+            node.openingElement = parseJSXOpeningElement(savedInJSXChild);
+            if (node.openingElement.attributes.length) {
+                // if there is attribute it's pretty sure that we are in a JSXElement
+                node.isCertainlyJSXElement = true;
+            }
+            if (!node.openingElement.isSelfClosing) {
+                node.children = parseList(ParsingContext.JSXChildContext, /*checkForStrictMode*/ false, parseJSXChild);
+                setInJSXChild(false);
+                
+                var tagName: string = entityNameToString(node.openingElement.tagName);
+                if (token === SyntaxKind.LessThanSlashToken) {
+                    node.closingElement = parseJSXClosingElement(savedInJSXChild, tagName);
+                    // if there is a closing tag it's pretty sure that we are in a JSXElement
+                    node.isCertainlyJSXElement = true;
+                } else {
+                    //TODO better error
+                    node.closingElement = <JSXClosingElement>createMissingNode(
+                        SyntaxKind.JSXClosingElement, /*reportAtCurrentPosition:*/ true, 
+                        Diagnostics._0_expected, "<" + tagName + ">"
+                    );
+                }
+               
+            } else {
+                // if there it is  a self closing tag it's pretty sure that we are in a JSXElement
+                node.isCertainlyJSXElement = true;
+            }
+            
+            return finishNode(node);
+        }
+        
+        
+        function parseJSXOpeningElement(savedInJSXChild: boolean): JSXOpeningElement {
+            var node = <JSXOpeningElement>createNode(SyntaxKind.JSXOpeningElement);
+            
+            parseExpected(SyntaxKind.LessThanToken);
+            node.tagName = parseEntityName(false);
+            node.attributes = parseList(ParsingContext.JSXAttributes, /*checkForStrictMode*/ false, parseJSXAttribute);
+            if (token === SyntaxKind.SlashToken) {
+                node.isSelfClosing = true;
+                nextToken();
+                setInJSXChild(savedInJSXChild)
+            } else {
+                setInJSXChild(true);
+            }
+            parseExpected(SyntaxKind.GreaterThanToken);
+            return finishNode(node);
+        }
+        
+        function parseJSXChild(): JSXElement | JSXExpression | JSXText {
+            switch(token) {
+                case SyntaxKind.LessThanToken:
+                    return parseJSXElement();
+                case SyntaxKind.OpenBraceToken:
+                    return parseJSXExpression();
+                case SyntaxKind.JSXText:
+                    return <JSXText>parseLiteralNode();
+            }
+            
+        }
+        
+        function parseJSXExpression(inJSXChild = true): JSXExpression {
+            var node = <JSXExpression>createNode(SyntaxKind.JSXExpression)
+            setInJSXChild(false);
+            parseExpected(SyntaxKind.OpenBraceToken)
+            if (token !== SyntaxKind.CloseBracketToken) {
+                node.expression = parseExpression();
+            }
+            setInJSXChild(inJSXChild);
+            parseExpected(SyntaxKind.CloseBraceToken)
+            return node;
+        }
+        
+        function parseJSXAttribute(): JSXAttribute {
+            var node = <JSXAttribute>createNode(SyntaxKind.JSXAttribute);
+            node.name = parseIdentifier();
+            if (parseOptional(SyntaxKind.EqualsToken)) {
+                switch(token) {
+                    case SyntaxKind.LessThanToken:
+                        node.initializer = parseJSXElement();
+                    case SyntaxKind.StringLiteral:
+                        node.initializer = parseLiteralNode();
+                        break;
+                    default:
+                        node.initializer = parseJSXExpression(false);
+                        break;
+                    
+                }
+            }
+            return finishNode(node);
+        }
+        
+        function parseJSXClosingElement(savedInJSXChild: boolean, tagName: string): JSXClosingElement {
+            var node = <JSXClosingElement>createNode(SyntaxKind.JSXClosingElement);
+            parseExpected(SyntaxKind.LessThanSlashToken);
+            var start = scanner.getTokenPos();
+            node.tagName = parseEntityName(false);
+            if (tagName !== entityNameToString(node.tagName)) {
+                var length = scanner.getTokenPos() - start;
+                parseErrorAtPosition(start, length, Diagnostics._0_expected, tagName);
+            }
+            setInJSXChild(savedInJSXChild);
+            parseExpected(SyntaxKind.GreaterThanToken);
             return finishNode(node);
         }
 
@@ -4765,6 +4926,7 @@ module ts {
                 case SyntaxKind.ArrayLiteralExpression:
                 case SyntaxKind.ParenthesizedExpression:
                 case SyntaxKind.ObjectLiteralExpression:
+                case SyntaxKind.JSXElement:
                 case SyntaxKind.FunctionExpression:
                 case SyntaxKind.Identifier:
                 case SyntaxKind.RegularExpressionLiteral:

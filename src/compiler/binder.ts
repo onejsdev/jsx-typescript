@@ -334,6 +334,93 @@ module ts {
             addDeclarationToSymbol(symbol, node, symbolKind);
             bindChildren(node, symbolKind, isBlockScopeContainer);
         }
+        
+        
+        function createFakePropertySymbol(parent: Node, parentSymbol: Symbol, name: string) {
+            //create fake node
+            var node = <PropertyAssignment>createNode(SyntaxKind.PropertyAssignment);
+            node.pos = parent.pos;
+            node.end = parent.pos;
+            node.parent = parent;
+            
+            //createSymbol
+            var symbol = createSymbol(SymbolFlags.Property, name);
+            parentSymbol.members[name] = symbol;
+            symbol.parent = parentSymbol;
+            addDeclarationToSymbol(symbol, node, SymbolFlags.Property);
+            return symbol;
+        }
+        
+        
+        function bindJSXElement(jsxElement: JSXElement) {
+            
+            // jsx element type are, we trick typescript by binding symbol
+            // {
+            //    type : string | class;                  <== JSXElement tagName
+            //    props : { children, otherprops };       <== child + attributes !== (ref || props)
+            //    key : string | boolean | number | null; <== key attribute
+            //    ref : string | null;                    <== ref attribute
+            // }
+            
+            var jsxElementSymbol = createSymbol(SymbolFlags.ObjectLiteral, "__object"); //TODO perhaps we should name it '__jsx';
+            addDeclarationToSymbol(jsxElementSymbol, jsxElement, SymbolFlags.ObjectLiteral);
+            
+            var saveParent = parent;
+            var saveContainer = container;            
+            parent = jsxElement
+            if (lastContainer) {
+                lastContainer.nextContainer = container;
+            }
+
+            lastContainer = container;
+            
+            var openingElement = jsxElement.openingElement;
+            openingElement.parent = jsxElement;
+            
+            parent = openingElement;
+            bind(openingElement.tagName);
+            parent = jsxElement;
+            
+            
+            var typeSymbol = createFakePropertySymbol(jsxElement, jsxElementSymbol, "type");
+            
+            var propsSymbol = createFakePropertySymbol(jsxElement, jsxElementSymbol, "props");
+        
+            var propsValueSymbol = createSymbol(SymbolFlags.ObjectLiteral, "__object");
+            propsValueSymbol.parent = propsSymbol;
+            addDeclarationToSymbol(propsValueSymbol, openingElement, SymbolFlags.ObjectLiteral);
+            
+            if (openingElement.attributes.length) {
+                openingElement.attributes.forEach(attr => {
+                    var name = attr.name.text;
+                    attr.parent = openingElement;
+                    if (name === 'ref' || name === 'key') {
+                        declareSymbol(jsxElementSymbol.members, jsxElementSymbol, attr, SymbolFlags.Property, SymbolFlags.PropertyExcludes);
+                    } else {
+                        declareSymbol(propsValueSymbol.members, propsValueSymbol, attr, SymbolFlags.Property, SymbolFlags.PropertyExcludes);
+                    }
+                    bindChildren(attr, SymbolFlags.Property, false);
+                });
+            }
+            
+            if(jsxElement.children && jsxElement.children.length) {
+                var childrenSymbol = createFakePropertySymbol(jsxElement, propsValueSymbol, "children");
+                jsxElement.children.forEach(bind);
+            }
+            
+            if (jsxElement.closingElement) {
+
+
+                jsxElement.closingElement.parent = jsxElement;
+
+                parent =  jsxElement.closingElement
+                bind(jsxElement.closingElement.tagName);
+            }
+            
+            container = saveContainer;
+            parent = saveParent;
+          
+        }
 
         function bindCatchVariableDeclaration(node: CatchClause) {
             var symbol = createSymbol(SymbolFlags.FunctionScopedVariable, node.name.text || "__missing");
@@ -480,6 +567,12 @@ module ts {
                 case SyntaxKind.ForInStatement:
                 case SyntaxKind.SwitchStatement:
                     bindChildren(node, 0, /*isBlockScopeContainer*/ true);
+                    break;
+                case SyntaxKind.JSXElement:
+                    bindJSXElement(<JSXElement>node);
+                    break;
+                case SyntaxKind.JSXAttribute:
+                    bindPropertyOrMethodOrAccessor(<Declaration>node, SymbolFlags.Property, SymbolFlags.PropertyExcludes, /*isBlockScopeContainer*/ false);
                     break;
                 default:
                     var saveParent = parent;

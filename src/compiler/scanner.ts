@@ -20,7 +20,8 @@ module ts {
         isUnterminated(): boolean;
         reScanGreaterToken(): SyntaxKind;
         reScanSlashToken(): SyntaxKind;
-        reScanTemplateToken(): SyntaxKind;
+        reScanTemplateToken(): SyntaxKind;         
+        setInJSXChild(inJSXChild: boolean): void;
         scan(): SyntaxKind;
         setText(text: string): void;
         setTextPos(textPos: number): void;
@@ -546,6 +547,7 @@ module ts {
         var tokenValue: string;
         var precedingLineBreak: boolean;
         var tokenIsUnterminated: boolean;
+        var inJSXChild: boolean;
 
         function error(message: DiagnosticMessage, length?: number): void {
             if (onError) {
@@ -779,6 +781,25 @@ module ts {
                     return String.fromCharCode(ch);
             }
         }
+    
+        function scanJSXText() {
+            var result = "";
+            var start = pos;
+            while (true) {
+                if (pos >= len) {
+                    result += text.substring(start, pos);
+                    error(Diagnostics.Unexpected_end_of_text);
+                    break;
+                }
+                var ch = text.charCodeAt(pos);
+                if (ch === CharacterCodes.lessThan || ch === CharacterCodes.openBrace) {
+                    result += text.substring(start, pos);
+                    break;
+                }
+                pos++;
+            }
+            return result;
+        }
 
         // Current character is known to be a backslash. Check for Unicode escape of the form '\uXXXX'
         // and return code point value if valid Unicode escape is found. Otherwise return -1.
@@ -866,6 +887,24 @@ module ts {
                     return token = SyntaxKind.EndOfFileToken;
                 }
                 var ch = text.charCodeAt(pos);
+                
+                
+                if (inJSXChild) {
+                    switch(ch) {
+                        case CharacterCodes.openBrace:
+                            return pos++, token = SyntaxKind.OpenBraceToken;
+                        case CharacterCodes.lessThan: 
+                            if (text.charCodeAt(pos + 1) === CharacterCodes.slash) {
+                                return pos += 2, token = SyntaxKind.LessThanSlashToken;
+                            }
+                            return pos++, token = SyntaxKind.LessThanToken;
+                        default:
+                            tokenValue = scanJSXText();
+                            return token = SyntaxKind.JSXText;
+                    }
+                }
+                
+                
                 switch (ch) {
                     case CharacterCodes.lineFeed:
                     case CharacterCodes.carriageReturn:
@@ -1186,6 +1225,12 @@ module ts {
                 }
             }
         }
+            
+        function setInJSXChild(val: boolean) {
+            inJSXChild = val;
+        }
+        
+        
 
         function reScanGreaterToken(): SyntaxKind {
             if (token === SyntaxKind.GreaterThanToken) {
@@ -1332,6 +1377,7 @@ module ts {
             reScanGreaterToken,
             reScanSlashToken,
             reScanTemplateToken,
+            setInJSXChild,
             scan,
             setText,
             setTextPos,

@@ -513,6 +513,8 @@ module ts {
             case SyntaxKind.TemplateExpression:
             case SyntaxKind.NoSubstitutionTemplateLiteral:
             case SyntaxKind.OmittedExpression:
+            case SyntaxKind.JSXElement:
+            case SyntaxKind.JSXExpression:
                 return true;
             case SyntaxKind.QualifiedName:
                 while (node.parent.kind === SyntaxKind.QualifiedName) {
@@ -536,6 +538,7 @@ module ts {
                     case SyntaxKind.EnumMember:
                     case SyntaxKind.PropertyAssignment:
                     case SyntaxKind.BindingElement:
+                    case SyntaxKind.JSXAttribute:
                         return (<VariableLikeDeclaration>parent).initializer === node;
                     case SyntaxKind.ExpressionStatement:
                     case SyntaxKind.IfStatement:
@@ -655,6 +658,7 @@ module ts {
             case SyntaxKind.PropertySignature:
             case SyntaxKind.PropertyAssignment:
             case SyntaxKind.ShorthandPropertyAssignment:
+            case SyntaxKind.JSXAttribute:
             case SyntaxKind.EnumMember:
             case SyntaxKind.MethodDeclaration:
             case SyntaxKind.MethodSignature:

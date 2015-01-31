@@ -2419,6 +2419,260 @@ module ts {
                 }
                 write("}");
             }
+            
+            var tagConvention = /^[a-z]|\-/;
+            function isTagName(name: string) {
+                return tagConvention.test(name);
+            }
+            
+            function quoteAttrName(attr: string) {
+                // Quote invalid JS identifiers.
+                if (!/^[a-z_$][a-z\d_$]*$/i.test(attr)) {
+                    return '"' + attr + '"';
+                }
+                return attr;
+            }
+            
+            function emitJSXLiteral(literal: JSXText | StringLiteralExpression, isLast: boolean) {
+                var lines = literal.text.split(/\r\n|\n|\r/);
+
+//                if (start) {
+//                    utils.append(start, state);
+//                }
+
+                var lastNonEmptyLine = 0;
+
+                lines.forEach((line, index)  =>{
+                    if (line.match(/[^ \t]/)) {
+                        lastNonEmptyLine = index;
+                    }
+                });
+
+                lines.forEach(function (line, index) {
+                    var isFirstLine = index === 0;
+                    var isLastLine = index === lines.length - 1;
+                    var isLastNonEmptyLine = index === lastNonEmptyLine;
+
+                    // replace rendered whitespace tabs with spaces
+                    var trimmedLine = line.replace(/\t/g, ' ');
+
+                    // trim whitespace touching a newline
+                    if (!isFirstLine) {
+                        trimmedLine = trimmedLine.replace(/^[ ]+/, '');
+                    }
+                    if (!isLastLine) {
+                        trimmedLine = trimmedLine.replace(/[ ]+$/, '');
+                    }
+
+                    if (!isFirstLine) {
+                        write(line.match(/^[ \t]*/)[0]);
+                    }
+
+                    if (trimmedLine || isLastNonEmptyLine) {
+                        write(JSON.stringify(trimmedLine) + (!isLastNonEmptyLine ? " + ' ' +" : ''));
+
+                        if (isLastNonEmptyLine) {
+//                            if (end) {
+//                                utils.append(end, state);
+//                            }
+                            if (!isLast) {
+                                write(',');
+                            }
+                        }
+
+                        // only restore tail whitespace if line had literals
+                        if (trimmedLine && !isLastLine) {
+                            write(line.match(/[ \t]*$/)[0]);
+                        }
+                    }
+
+                    if (!isLastLine) {
+                        writeLine();
+                    }
+                });
+            }
+            
+            
+            function emitJSXElement(object: JSXElement) {
+                //porting react
+                var openingElement = object.openingElement;
+                var nameObject = openingElement.tagName;
+                var attributes = openingElement.attributes;
+
+                // We assume that the React runtime is already in scope
+                write('React.createElement(');
+                
+                increaseIndent();
+                writeLine();
+                // XJSMemberExpressions are not.
+                if (nameObject.kind === SyntaxKind.Identifier) {
+                    var ident = (<Identifier>nameObject);
+                    if (isTagName(ident.text)) {
+                        write('"' + ident.text + '"');
+                    } else {
+                        write(ident.text);
+                    }
+                } else {
+                    emitQualifiedName(<QualifiedName>nameObject);
+                }
+                write(',');
+                writeLine();
+
+                var hasAttributes = attributes.length;
+
+//                var hasAtLeastOneSpreadProperty = attributesObject.some(function(attr) {
+//                return attr.type === Syntax.XJSSpreadAttribute;
+//                });
+
+//                // if we don't have any attributes, pass in null
+//                if (hasAtLeastOneSpreadProperty) {
+//                utils.append('React.__spread({', state);
+//                } else 
+                
+                if (hasAttributes) {
+                    write('{');
+                    increaseIndent();
+                    writeLine();
+                } else {
+                    write('null');
+                }
+
+//                // keep track of if the previous attribute was a spread attribute
+//                var previousWasSpread = false;
+
+                // write attributes
+                attributes.forEach(function(attr, index) {
+                    var isLast = index === attributes.length - 1;
+
+//                if (attr.type === Syntax.XJSSpreadAttribute) {
+//                  // Close the previous object or initial object
+//                  if (!previousWasSpread) {
+//                    utils.append('}, ', state);
+//                  }
+//
+//                  // Move to the expression start, ignoring everything except parenthesis
+//                  // and whitespace.
+//                  utils.catchup(attr.range[0], state, stripNonWhiteParen);
+//                  // Plus 1 to skip `{`.
+//                  utils.move(attr.range[0] + 1, state);
+//                  utils.catchup(attr.argument.range[0], state, stripNonWhiteParen);
+//
+//                  traverse(attr.argument, path, state);
+//
+//                  utils.catchup(attr.argument.range[1], state);
+//
+//                  // Move to the end, ignoring parenthesis and the closing `}`
+//                  utils.catchup(attr.range[1] - 1, state, stripNonWhiteParen);
+//
+//                  if (!isLast) {
+//                    utils.append(', ', state);
+//                  }
+//
+//                  utils.move(attr.range[1], state);
+//
+//                  previousWasSpread = true;
+//
+//                  return;
+//                }
+
+//                    // If the next attribute is a spread, we're effective last in this object
+//                    if (!isLast) {
+//                        isLast = attributesObject[index + 1].type === Syntax.XJSSpreadAttribute;
+//                    }
+
+                    var name = attr.name.text;
+
+
+//                    if (previousWasSpread) {
+//                      utils.append('{', state);
+//                    }
+
+                    write(quoteAttrName(name));
+                    write(': ');
+
+                    if (!attr.initializer) {
+                        write('true');
+                        if (!isLast) {
+                            write(',');
+                        }
+                    } else {
+                        if (attr.initializer.kind === SyntaxKind.StringLiteral) {
+                            emitJSXLiteral(<StringLiteralExpression>attr.initializer, isLast);
+                        } else {
+                            emitNode((<JSXExpression>attr.initializer).expression);
+                            if (!isLast) {
+                                write(',');
+                            }
+                        }
+                    }
+                    writeLine();
+
+
+//                    previousWasSpread = false;
+
+                });
+
+
+                if (hasAttributes /*&& !previousWasSpread*/) {
+                    decreaseIndent();
+                    writeLine();
+                    write('}');
+                }
+                
+
+//                if (hasAtLeastOneSpreadProperty) {
+//                utils.append(')', state);
+//                }
+
+                // filter out whitespace
+                var childrenToRender = (
+                    object.children && 
+                    object.children.filter(child => !(
+                        child.kind === SyntaxKind.JSXText && 
+                        typeof (<JSXText>child).text === 'string' && 
+                        (<JSXText>child).text.match(/^[ \t]*[\r\n][ \t\r\n]*$/)
+                    ))
+                );
+                
+                if (childrenToRender && childrenToRender.length > 0) {
+                    var lastRenderableIndex : number;
+
+                    childrenToRender.forEach((child, index)  => {
+                        if (child.kind !== SyntaxKind.JSXExpression || !!(<JSXExpression>child).expression) {
+                            lastRenderableIndex = index;
+                        }
+                    });
+
+                    if (lastRenderableIndex !== undefined) {
+                        write(',');
+                        writeLine();
+                    }
+
+                    childrenToRender.forEach(function(child, index) {
+
+                        var isLast = index >= lastRenderableIndex;
+
+                        if (child.kind === SyntaxKind.JSXText) {
+                            emitJSXLiteral(<JSXText>child, isLast);
+                        } else if (child.kind === SyntaxKind.JSXExpression) {
+                            emitNode((<JSXExpression>child).expression);
+                            if (!isLast) {
+                                write(',');
+                            }
+                        } else {
+                            emitNode(child)
+                            if (!isLast) {
+                                write(',');
+                            }
+                        }
+                        writeLine();
+                    });
+                }
+
+                decreaseIndent();
+                writeLine();
+                write(')');
+            }
 
             function emitComputedPropertyName(node: ComputedPropertyName) {
                 write("[");
@@ -4151,6 +4405,8 @@ module ts {
                         return emitImportDeclaration(<ImportDeclaration>node);
                     case SyntaxKind.SourceFile:
                         return emitSourceFile(<SourceFile>node);
+                    case SyntaxKind.JSXElement:
+                        return emitJSXElement(<JSXElement>node);
                 }
             }
 

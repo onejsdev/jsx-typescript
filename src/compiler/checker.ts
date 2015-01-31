@@ -3359,7 +3359,7 @@ module ts {
 
         // Returns true if the given expression contains (at any level of nesting) a function or arrow expression
         // that is subject to contextual typing.
-        function isContextSensitive(node: Expression | MethodDeclaration | ObjectLiteralElement): boolean {
+        function isContextSensitive(node: Expression | MethodDeclaration | ObjectLiteralElement | JSXAttribute | JSXOpeningElement): boolean {
             Debug.assert(node.kind !== SyntaxKind.MethodDeclaration || isObjectLiteralMethod(node));
             switch (node.kind) {
                 case SyntaxKind.FunctionExpression:
@@ -3382,6 +3382,14 @@ module ts {
                     return isContextSensitiveFunctionLikeDeclaration(<MethodDeclaration>node);
                 case SyntaxKind.ParenthesizedExpression:
                     return isContextSensitive((<ParenthesizedExpression>node).expression);
+                case SyntaxKind.JSXElement:
+                    return isContextSensitive((<JSXElement>node).openingElement) || forEach((<JSXElement>node).children, isContextSensitive);
+                case SyntaxKind.JSXOpeningElement:
+                    return forEach((<JSXOpeningElement>node).attributes, isContextSensitive);
+                case SyntaxKind.JSXAttribute:
+                    return !!(<JSXAttribute>node).initializer && isContextSensitive((<JSXAttribute>node).initializer);
+                case SyntaxKind.JSXExpression:
+                    return !!(<JSXExpression>node).expression && isContextSensitive((<JSXExpression>node).expression);
             }
 
             return false;
@@ -4592,6 +4600,8 @@ module ts {
                     case SyntaxKind.ThrowStatement:
                     case SyntaxKind.TryStatement:
                     case SyntaxKind.CatchClause:
+                    //TODO CHECK FOR JSXExpression OR Element
+                    case SyntaxKind.JSXElement:
                         return forEachChild(node, isAssignedIn);
                 }
                 return false;
@@ -5290,6 +5300,8 @@ module ts {
                     return getContextualTypeForSubstitutionExpression(<TemplateExpression>parent.parent, node);
                 case SyntaxKind.ParenthesizedExpression:
                     return getContextualType(<ParenthesizedExpression>parent);
+                
+                //TODO JSX
             }
             return undefined;
         }
@@ -5560,6 +5572,104 @@ module ts {
                 }
                 return undefined;
             }
+        }
+        
+        function checkJSXElement(node: JSXElement, contextualMapper?: TypeMapper): Type {
+            // Grammar checking
+            checkGrammarJSXElement(node);
+
+            var jsxPropertiesTable: SymbolTable = {};
+            var jsxTypeFlags: TypeFlags;
+            
+            //The type property
+            var typeMember = node.symbol.members["type"];
+            var type: Type;
+            if (node.openingElement.tagName.kind === SyntaxKind.Identifier) {
+                var text = (<Identifier>node.openingElement.tagName).text;
+                if (text.toLowerCase() === text) {
+                    type = stringType;
+                } else {
+                    type = checkIdentifier(<Identifier>node.openingElement.tagName);
+                }
+            } else {
+                type = checkQualifiedName(<QualifiedName>node.openingElement.tagName);
+            }
+            
+            var prop = <TransientSymbol>createSymbol(SymbolFlags.Property | SymbolFlags.Transient | typeMember.flags, 'type');
+            prop.declarations = typeMember.declarations;
+            prop.parent = typeMember.parent;
+            prop.valueDeclaration = typeMember.valueDeclaration;
+
+            prop.type = type;
+            prop.target = typeMember;
+            jsxPropertiesTable['type'] = prop;
+            
+            
+            //props property
+            
+            var propsPropertiesTable: SymbolTable = {};
+            var propsTypeFlags: TypeFlags;
+
+            var attributes = node.openingElement.attributes;
+            for (var i = 0; i < attributes.length; i++) {
+                var attr = attributes[i];
+                var member = attr.symbol;
+                var type = attr.initializer ? checkExpression(attr.initializer, contextualMapper) : booleanType;
+                
+                var prop = <TransientSymbol>createSymbol(SymbolFlags.Property | SymbolFlags.Transient | member.flags, member.name);
+                prop.declarations = member.declarations;
+                prop.parent = member.parent;
+                if (member.valueDeclaration) {
+                    prop.valueDeclaration = member.valueDeclaration;
+                }
+
+                prop.type = type;
+                prop.target = member;
+                
+                var name = attr.name.text;
+                if (name === 'ref' || name === 'key') {
+                    jsxPropertiesTable[prop.name] = prop;
+                    jsxTypeFlags |= type.flags;
+                } else {
+                    propsPropertiesTable[prop.name] = prop;
+                    propsTypeFlags |= type.flags;
+                }
+                
+            }
+            
+            
+            var propsMember = node.symbol.members['props'];
+            
+            if (node.children && node.children.length) {
+                var childrenMember = node.openingElement.symbol.members['children'];
+                var prop = <TransientSymbol>createSymbol(SymbolFlags.Property | SymbolFlags.Transient | typeMember.flags, 'children');
+                prop.declarations = childrenMember.declarations;
+                prop.parent = childrenMember.parent;
+                if (childrenMember.valueDeclaration) {
+                    prop.valueDeclaration = childrenMember.valueDeclaration;
+                }
+                
+                var elementTypes = node.children.map( e => checkExpression(e, contextualMapper));
+                prop.type = createArrayType(getUnionType(elementTypes));
+                propsPropertiesTable['children'] = prop;
+            }
+            
+            
+            var prop = <TransientSymbol>createSymbol(SymbolFlags.Property | SymbolFlags.Transient | propsMember.flags, 'props');
+            prop.declarations = propsMember.declarations;
+            prop.parent = propsMember.parent;
+            prop.valueDeclaration = propsMember.valueDeclaration;
+            
+            prop.type = createAnonymousType(node.openingElement.symbol, propsPropertiesTable, emptyArray, emptyArray, undefined, undefined);
+            prop.flags |= TypeFlags.ObjectLiteral | TypeFlags.ContainsObjectLiteral | (propsTypeFlags & TypeFlags.ContainsUndefinedOrNull);
+            prop.target = propsMember;
+            
+            jsxPropertiesTable['props'] = prop;
+            
+            
+            var result = createAnonymousType(node.symbol, jsxPropertiesTable, emptyArray, emptyArray, undefined, undefined);
+            result.flags |= TypeFlags.ObjectLiteral | TypeFlags.ContainsObjectLiteral | (jsxTypeFlags & TypeFlags.ContainsUndefinedOrNull);
+            return result;
         }
 
         // If a symbol is a synthesized symbol with no value declaration, we assume it is a property. Example of this are the synthesized
@@ -7201,6 +7311,10 @@ module ts {
             return type;
         }
 
+
+        
+        
+        
         function checkExpression(node: Expression, contextualMapper?: TypeMapper): Type {
             return checkExpressionOrQualifiedName(node, contextualMapper);
         }
@@ -7263,6 +7377,7 @@ module ts {
                 case SyntaxKind.TemplateExpression:
                     return checkTemplateExpression(<TemplateExpression>node);
                 case SyntaxKind.StringLiteral:
+                case SyntaxKind.JSXText:
                 case SyntaxKind.NoSubstitutionTemplateLiteral:
                     return stringType;
                 case SyntaxKind.RegularExpressionLiteral:
@@ -7308,6 +7423,12 @@ module ts {
                 case SyntaxKind.YieldExpression:
                     checkYieldExpression(<YieldExpression>node);
                     return unknownType;
+                case SyntaxKind.JSXElement:
+                    return checkJSXElement(<JSXElement>node, contextualMapper);
+                case SyntaxKind.JSXExpression:
+                    if ((<JSXExpression>node).expression) {
+                        return checkExpression((<JSXExpression>node).expression);
+                    }
             }
             return unknownType;
         }
@@ -7489,6 +7610,7 @@ module ts {
                     case SyntaxKind.FunctionDeclaration:
                     case SyntaxKind.ArrowFunction:
                     case SyntaxKind.ObjectLiteralExpression: return false;
+                    case SyntaxKind.JSXElement: return false;
                     default: return forEachChild(n, containsSuperCall);
                 }
             }
@@ -10676,6 +10798,37 @@ module ts {
                     else {
                         return grammarErrorOnNode(name, Diagnostics.An_object_literal_cannot_have_property_and_accessor_with_the_same_name);
                     }
+                }
+            }
+        }
+        
+        function checkGrammarJSXElement(node: JSXElement) {
+            var seen: Map<boolean> = {};
+            var Property = 1;
+            var GetAccessor = 2;
+            var SetAccesor = 4;
+            var GetOrSetAccessor = GetAccessor | SetAccesor;
+            var inStrictMode = (node.parserContextFlags & ParserContextFlags.StrictMode) !== 0;
+
+            var attributes = node.openingElement.attributes;
+            for (var i = 0, n = node.openingElement.attributes.length; i < n; i++) {
+                var attr = attributes[i];
+                var name = attr.name;
+                
+               
+
+                if (!hasProperty(seen, (<Identifier>name).text)) {
+                    seen[(<Identifier>name).text] = true;
+                }
+                else {
+                    //TODO better error
+                    return grammarErrorOnNode(name, Diagnostics.An_object_literal_cannot_have_multiple_get_Slashset_accessors_with_the_same_name);
+                }
+                
+                if(attr.initializer && attr.initializer.kind === SyntaxKind.JSXExpression && 
+                    !(<JSXExpression>attr.initializer).expression) {
+                    //TODO better error
+                    return grammarErrorOnNode(attr.initializer, Diagnostics.Expression_expected);
                 }
             }
         }

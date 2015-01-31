@@ -23,6 +23,8 @@ module ts {
         NumericLiteral,
         StringLiteral,
         RegularExpressionLiteral,
+        //JSXToken
+        JSXText,
         NoSubstitutionTemplateLiteral,
         // Pseudo-literals
         TemplateHead,
@@ -39,6 +41,7 @@ module ts {
         DotDotDotToken,
         SemicolonToken,
         CommaToken,
+        LessThanSlashToken,
         LessThanToken,
         GreaterThanToken,
         LessThanEqualsToken,
@@ -230,6 +233,13 @@ module ts {
         ModuleBlock,
         ImportDeclaration,
         ExportAssignment,
+        
+        // JSX
+        JSXElement,
+        JSXOpeningElement,
+        JSXClosingElement,
+        JSXAttribute,
+        JSXExpression,
 
         // Module references
         ExternalModuleReference,
@@ -855,6 +865,38 @@ module ts {
         // 'EntityName' for an internal module reference, 'ExternalModuleReference' for an external
         // module reference.
         moduleReference: EntityName | ExternalModuleReference;
+    }
+  
+    export interface JSXText extends LiteralExpression {
+        _jsxTextExpressionBrand: any;
+    }
+  
+    export interface JSXElement extends PrimaryExpression, Declaration {
+        openingElement: JSXOpeningElement;
+        children?: NodeArray<JSXElement | JSXExpression | JSXText>;
+        closingElement?: JSXClosingElement;
+        isCertainlyJSXElement: boolean;
+    }
+    
+    export interface JSXOpeningElement extends Declaration {
+        tagName: EntityName;
+        attributes: NodeArray<JSXAttribute>;
+        isSelfClosing: boolean;
+    }
+    
+    export interface JSXAttribute extends Declaration {
+        name: Identifier;
+        initializer?: Expression;
+    }
+    
+    //TODO Sprea attribute
+  
+    export interface JSXClosingElement extends Node {
+        tagName: EntityName;
+    }
+  
+    export interface JSXExpression extends PrimaryExpression {
+        expression?: Expression;
     }
 
     export interface ExternalModuleReference extends Node {
