@@ -293,7 +293,6 @@ module ts {
         ArrayBindingElements,    // Binding elements in array binding list
         ArgumentExpressions,     // Expressions in argument list
         ObjectLiteralMembers,    // Members in object literal
-        JSXChildContext,         // Children of jsx element
         JSXAttributes,           // Attributes in jsx element
         ArrayLiteralMembers,     // Members in array literal
         Parameters,              // Parameters in parameter list
@@ -333,9 +332,6 @@ module ts {
             case ParsingContext.TupleElementTypes:      return Diagnostics.Type_expected;
             case ParsingContext.HeritageClauses:        return Diagnostics.Unexpected_token_expected;
             case ParsingContext.JSXAttributes:          return Diagnostics.Identifier_expected;
-            case ParsingContext.JSXChildContext:        return Diagnostics.Expression_expected;
-                  //  return isIdentifier();
-                    //return token === SyntaxKind.OpenBraceToken || token === SyntaxKind.LessThanToken || token === SyntaxKind.JSXText
         }
     };
 
@@ -1499,8 +1495,6 @@ module ts {
                     return isHeritageClause();
                 case ParsingContext.JSXAttributes:
                     return isIdentifier();
-                case ParsingContext.JSXChildContext:
-                    return token === SyntaxKind.OpenBraceToken || token === SyntaxKind.LessThanToken || token === SyntaxKind.JSXText
             }
 
             Debug.fail("Non-exhaustive case in 'isListElement'.");
@@ -1564,8 +1558,6 @@ module ts {
                     return token === SyntaxKind.OpenBraceToken || token === SyntaxKind.CloseBraceToken;
                 case ParsingContext.JSXAttributes:
                     return token === SyntaxKind.GreaterThanToken || token === SyntaxKind.SlashToken;
-                case ParsingContext.JSXChildContext:
-                    return token === SyntaxKind.LessThanSlashToken;
 
             }
         }
@@ -3434,13 +3426,34 @@ module ts {
             
             var tagName: string = entityNameToString(node.openingElement.tagName);
             
+            node.children = <NodeArray<JSXText | JSXExpression | JSXElement>>[];
+            node.children.pos = getNodePos();
+            
             
             if (!node.openingElement.isSelfClosing) {
                 if (speculative && !node.isCertainlyJSXElement && !hasProperty(closingTags, tagName)) {
-                    console.log('no closing tag for tagName :' + tagName);
                     return null;
                 }
-                node.children = parseList(ParsingContext.JSXChildContext, /*checkForStrictMode*/ false, parseJSXChild);
+                
+                //we can't use parseList we need to intercept '}‘ token in speculative mode
+                var savedStrictModeContext = inStrictModeContext();
+                  
+                while (true) {
+                    if (token === SyntaxKind.OpenBraceToken || token === SyntaxKind.LessThanToken || token === SyntaxKind.JSXText) {
+                        node.children.push(parseJSXChild());
+                        continue;
+                    }
+                    if (speculative && token !== SyntaxKind.LessThanSlashToken) {
+                        // that means that we are generaly in case like 
+                        // <div> {<div> {}}</div> to desambiguate those cases
+                        // we forbid the } token in jsx text (use entity);
+                        return null;
+                    }
+                    break;
+                }
+
+                setStrictModeContext(savedStrictModeContext);
+                node.children.end = getNodeEnd();
                 setInJSXChild(false);
                 
                 
@@ -3449,7 +3462,6 @@ module ts {
                     
                     var start = scanner.getStartPos();
                     node.closingElement = parseJSXClosingElement(savedInJSXChild, savedInJSXTag);
-                    
                     if (!node.closingElement.tagName || tagName !== entityNameToString(node.closingElement.tagName)) {
                         var length = scanner.getTokenPos() - start;
                         parseErrorAtPosition(start, length, Diagnostics._0_expected, '</' + tagName + '>');
@@ -3463,6 +3475,7 @@ module ts {
                         SyntaxKind.JSXClosingElement, /*reportAtCurrentPosition:*/ true, 
                         Diagnostics._0_expected, "</" + tagName + ">"
                     );
+                    node.children.end = getNodeEnd();
                     //TODO we need to rewind the parser before the token, but normally here we
                     // are at 'end of file' so it's not so important
                     setInJSXTag(savedInJSXChild);

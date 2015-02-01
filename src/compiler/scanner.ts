@@ -865,7 +865,7 @@ module ts {
                     break;
                 }
                 var ch = text.charCodeAt(pos);
-                if (ch === CharacterCodes.lessThan || ch === CharacterCodes.openBrace) {
+                if (ch === CharacterCodes.lessThan || ch === CharacterCodes.openBrace || ch === CharacterCodes.closeBrace) {
                     result += text.substring(start, pos);
                     break;
                 }
@@ -964,6 +964,8 @@ module ts {
                 
                 if (inJSXChild) {
                     switch(ch) {
+                        case CharacterCodes.closeBrace:
+                            return pos++, token = SyntaxKind.CloseBraceToken;
                         case CharacterCodes.openBrace:
                             return pos++, token = SyntaxKind.OpenBraceToken;
                         case CharacterCodes.lessThan: 
