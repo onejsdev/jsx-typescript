@@ -3408,7 +3408,13 @@ module ts {
         }
         
         
-        
+        function hasClosingTag(tagName: string): boolean {
+            if (!hasProperty(closingTags, tagName)) {
+                return false;
+            }
+            var currentPos = getNodePos();
+            return closingTags[tagName].some(pos => pos >= currentPos)
+        }
         
         function parseJSXElement(speculative = false): JSXElement {
             var node = <JSXElement>createNode(SyntaxKind.JSXElement);
@@ -3431,7 +3437,7 @@ module ts {
             
             
             if (!node.openingElement.isSelfClosing) {
-                if (speculative && !node.isCertainlyJSXElement && !hasProperty(closingTags, tagName)) {
+                if (speculative && !node.isCertainlyJSXElement && !hasClosingTag(tagName)) {
                     return null;
                 }
                 
