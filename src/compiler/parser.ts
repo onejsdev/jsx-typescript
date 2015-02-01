@@ -601,10 +601,6 @@ module ts {
         // Note: any errors at the end of the file that do not precede a regular node, should get
         // attached to the EOF token.
         var parseErrorBeforeNextFinishedNode: boolean;
-
-        var sourceFile: SourceFile;
-
-        return parseSourceFile(sourceText, setParentNodes);
         
         var inJSXChild = false;
     
@@ -619,6 +615,14 @@ module ts {
             scanner.setInJSXTag(val);
             inJSXTag = val;
         }
+        
+        
+        var closingTags = getClosingTags(sourceText, languageVersion);
+        
+        var sourceFile: SourceFile;
+
+        return parseSourceFile(sourceText, setParentNodes);
+        
         
         function parseSourceFile(text: string, setParentNodes: boolean): SourceFile {
             // Set our initial state before parsing.
@@ -1174,7 +1178,14 @@ module ts {
             var saveToken = token;
             var saveParseDiagnosticsLength = sourceFile.parseDiagnostics.length;
             var saveParseErrorBeforeNextFinishedNode = parseErrorBeforeNextFinishedNode;
-
+            
+            var savedInJSXChild = inJSXChild;
+            var savedInJSXTag = inJSXTag;
+            var savedClosingTags = Object.keys(closingTags).reduce((result, tag) => {
+                result[tag] = closingTags[tag].slice();
+                return result;
+            }, <Map<number[]>>{});
+            
             // Note: it is not actually necessary to save/restore the context flags here.  That's
             // because the saving/restorating of these flags happens naturally through the recursive
             // descent nature of our parser.  However, we still store this here just so we can 
@@ -1196,6 +1207,10 @@ module ts {
                 token = saveToken;
                 sourceFile.parseDiagnostics.length = saveParseDiagnosticsLength;
                 parseErrorBeforeNextFinishedNode = saveParseErrorBeforeNextFinishedNode;
+                
+                closingTags = savedClosingTags;
+                setInJSXChild(savedInJSXChild);
+                setInJSXTag(savedInJSXTag);
             }
 
             return result;
@@ -3384,7 +3399,7 @@ module ts {
         
         function tryParseJSXElement(): JSXElement {
             return tryParse(function ()  {
-                var jsxElement = parseJSXElement();
+                var jsxElement = parseJSXElement(true);
                 return jsxElement && jsxElement.isCertainlyJSXElement ? jsxElement : null;
             });
         }
@@ -3400,7 +3415,10 @@ module ts {
             return '(Missing)';
         }
         
-        function parseJSXElement(): JSXElement {
+        
+        
+        
+        function parseJSXElement(speculative = false): JSXElement {
             var node = <JSXElement>createNode(SyntaxKind.JSXElement);
             var savedInJSXChild = inJSXChild;
             var savedInJSXTag = inJSXTag;
@@ -3408,27 +3426,42 @@ module ts {
             setInJSXChild(false);
             setInJSXTag(true)
             node.openingElement = parseJSXOpeningElement(savedInJSXChild, savedInJSXTag);
+            
             if (node.openingElement.attributes.length) {
                 // if there is attribute it's pretty sure that we are in a JSXElement
                 node.isCertainlyJSXElement = true;
             }
             
+            var tagName: string = entityNameToString(node.openingElement.tagName);
+            
             
             if (!node.openingElement.isSelfClosing) {
+                if (speculative && !node.isCertainlyJSXElement && !hasProperty(closingTags, tagName)) {
+                    console.log('no closing tag for tagName :' + tagName);
+                    return null;
+                }
                 node.children = parseList(ParsingContext.JSXChildContext, /*checkForStrictMode*/ false, parseJSXChild);
                 setInJSXChild(false);
                 
-                var tagName: string = entityNameToString(node.openingElement.tagName);
+                
                 if (token === SyntaxKind.LessThanSlashToken) {
                     setInJSXTag(true);
-                    node.closingElement = parseJSXClosingElement(tagName, savedInJSXChild, savedInJSXTag);
-                    // if there is a closing tag it's pretty sure that we are in a JSXElement
-                    node.isCertainlyJSXElement = true;
+                    
+                    var start = scanner.getStartPos();
+                    node.closingElement = parseJSXClosingElement(savedInJSXChild, savedInJSXTag);
+                    
+                    if (!node.closingElement.tagName || tagName !== entityNameToString(node.closingElement.tagName)) {
+                        var length = scanner.getTokenPos() - start;
+                        parseErrorAtPosition(start, length, Diagnostics._0_expected, '</' + tagName + '>');
+                    } else {
+                        // if there is a closing tag it's pretty sure that we are in a JSXElement
+                        node.isCertainlyJSXElement = true;
+                    }
                 } else {
                     //TODO better error
                     node.closingElement = <JSXClosingElement>createMissingNode(
                         SyntaxKind.JSXClosingElement, /*reportAtCurrentPosition:*/ true, 
-                        Diagnostics._0_expected, "<" + tagName + ">"
+                        Diagnostics._0_expected, "</" + tagName + ">"
                     );
                     //TODO we need to rewind the parser before the token, but normally here we
                     // are at 'end of file' so it's not so important
@@ -3437,7 +3470,7 @@ module ts {
                 }
                
             } else {
-                // if there it is  a self closing tag it's pretty sure that we are in a JSXElement
+                // if it's a self closing tag it's pretty sure that we are in a JSXElement
                 node.isCertainlyJSXElement = true;
             }
             finishNode(node);
@@ -3527,15 +3560,10 @@ module ts {
             return finishNode(node);
         }
         
-        function parseJSXClosingElement(tagName: string, savedInJSXChild: boolean, savedInJSXTag: boolean): JSXClosingElement {
+        function parseJSXClosingElement(savedInJSXChild: boolean, savedInJSXTag: boolean): JSXClosingElement {
             var node = <JSXClosingElement>createNode(SyntaxKind.JSXClosingElement);
             parseExpected(SyntaxKind.LessThanSlashToken);
-            var start = scanner.getTokenPos();
             node.tagName = parseEntityName(true);
-            if (tagName !== entityNameToString(node.tagName)) {
-                var length = scanner.getTokenPos() - start;
-                parseErrorAtPosition(start, length, Diagnostics._0_expected, tagName);
-            }
             setInJSXChild(savedInJSXChild);
             setInJSXTag(savedInJSXTag);
             parseExpected(SyntaxKind.GreaterThanToken);

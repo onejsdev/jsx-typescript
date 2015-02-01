@@ -538,6 +538,64 @@ module ts {
             ch >= CharacterCodes._0 && ch <= CharacterCodes._9 || ch === CharacterCodes.$ || ch === CharacterCodes._ ||
             ch > CharacterCodes.maxAsciiCharacter && isUnicodeIdentifierPart(ch, languageVersion);
     }
+    
+    export function getClosingTags(sourceText: string, languageVersion: ScriptTarget): Map<number[]> {
+            var closingTags:  Map<number[]> = {};
+            var ch: number;
+            var pos: number = 0;      
+            var len: number = sourceText.length;
+
+            var tagStartPosition: number;
+
+            outer: while(pos < len ) {
+                ch = sourceText.charCodeAt(pos);
+                if (ch === CharacterCodes.lessThan) {
+                    ch = sourceText.charCodeAt(pos + 1);
+                    if (ch === CharacterCodes.slash) {
+                        var tagStartPosition = pos;
+                        var i = pos + 2;
+                        var tag = '';
+                        var tagStarted = false;
+                        while (i < len) {
+                            ch = sourceText.charCodeAt(i);
+                            if (tagStarted) {
+                                if (
+                                    ch === CharacterCodes.minus || ch === CharacterCodes.dot ||
+                                    (isIdentifierPart(ch, languageVersion) && ch !== CharacterCodes.backslash)
+                                ) {
+                                    tag += String.fromCharCode(ch);
+                                } else if (ch === CharacterCodes.greaterThan) {
+                                    var positions: number[];
+                                    if (hasProperty(closingTags, tag)) {
+                                        positions =  closingTags[tag]
+                                    } else {
+                                        positions =  closingTags[tag]  = [];
+                                    }
+                                    positions.push(tagStartPosition);
+                                    pos = i + 1;
+                                    continue outer;
+                                } else {
+                                    break;
+                                }
+                            } else  {
+                                if (!isWhiteSpace(ch) || !isLineBreak(ch)) {
+                                    if (isIdentifierStart(ch, languageVersion) && ch !== CharacterCodes.backslash) {
+                                        tag += String.fromCharCode(ch);
+                                        tagStarted = true;
+                                    } else {
+                                        break;
+                                    }
+                                }
+                            }
+                            i++;
+                        }
+                        pos++;
+                    }
+                }
+                pos++;
+            }
+            return closingTags;
+        }
 
     export function createScanner(languageVersion: ScriptTarget, skipTrivia: boolean, text?: string, onError?: ErrorCallback): Scanner {
         var pos: number;       // Current position (end position of text of current token)
