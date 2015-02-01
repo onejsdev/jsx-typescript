@@ -1177,10 +1177,6 @@ module ts {
             
             var savedInJSXChild = inJSXChild;
             var savedInJSXTag = inJSXTag;
-            var savedClosingTags = Object.keys(closingTags).reduce((result, tag) => {
-                result[tag] = closingTags[tag].slice();
-                return result;
-            }, <Map<number[]>>{});
             
             // Note: it is not actually necessary to save/restore the context flags here.  That's
             // because the saving/restorating of these flags happens naturally through the recursive
@@ -1204,7 +1200,6 @@ module ts {
                 sourceFile.parseDiagnostics.length = saveParseDiagnosticsLength;
                 parseErrorBeforeNextFinishedNode = saveParseErrorBeforeNextFinishedNode;
                 
-                closingTags = savedClosingTags;
                 setInJSXChild(savedInJSXChild);
                 setInJSXTag(savedInJSXTag);
             }
