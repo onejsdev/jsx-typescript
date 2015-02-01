@@ -2650,11 +2650,17 @@ module ts {
                 // filter out whitespace
                 var childrenToRender = (
                     node.children && 
-                    node.children.filter(child => !(
-                        child.kind === SyntaxKind.JSXText && 
-                        typeof (<JSXText>child).text === 'string' && 
-                        (<JSXText>child).text.match(/^[ \t]*[\r\n][ \t\r\n]*$/)
-                    ))
+                    node.children.filter(child => 
+                        !(
+                            child.kind === SyntaxKind.JSXText && 
+                            typeof (<JSXText>child).text === 'string' && 
+                            (<JSXText>child).text.match(/^[ \t]*[\r\n][ \t\r\n]*$/)
+                        ) && 
+                        !(
+                            child.kind === SyntaxKind.JSXExpression && 
+                            !(<JSXExpression>child).expression
+                        )
+                    )
                 );
                 
                 if (childrenToRender && childrenToRender.length > 0) {
