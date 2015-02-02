@@ -6424,6 +6424,9 @@ module ts {
         
         function resolveReactCreateElementType(node: JSXElement): Type {
             var reactSymbol = resolveName(node, 'React', SymbolFlags.Value | SymbolFlags.ExportValue, Diagnostics.Cannot_find_name_0, 'React');
+            if (!reactSymbol) {
+                return unknownType;
+            }
             reactSymbol = getExportSymbolOfValueSymbolIfExported(reactSymbol);
             var type = getTypeOfSymbol(reactSymbol);
             if (type === unknownType) {
