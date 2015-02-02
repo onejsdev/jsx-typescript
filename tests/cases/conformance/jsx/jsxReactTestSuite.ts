@@ -1,3 +1,4 @@
+declare var React: any;
 declare var Component:any;
 declare var Composite:any;
 declare var Composite2:any;

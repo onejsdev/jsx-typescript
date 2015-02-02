@@ -1,3 +1,5 @@
+declare var React: any;
+
 <div>&amp;</div>;
 
 <div>&gt;</div>;

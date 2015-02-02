@@ -1,3 +1,5 @@
+declare var React: any;
+
 </>;
 <a: />;
 <:a />;
