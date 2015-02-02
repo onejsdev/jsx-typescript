@@ -156,8 +156,8 @@ declare module React {
         itemType?: string;
     }
     
-    function createElement(type: string, props?: HTMLAttributes, ...rest: any[]): ReactElement;
-    function createElement<P>(type: ComponentClass<P>, props?: P, ...rest: any[]): ReactElement;
+    function createElement(type: string, props?: HTMLAttributes, ...rest: any[]): ReactHtmlElement;
+    function createElement<P>(type: ComponentClass<P>, props?: P, ...rest: any[]): ReactCompositeElement<P>;
 }
 
 class TodoList extends React.Component<{ items: string[] },{}> {

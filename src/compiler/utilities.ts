@@ -477,6 +477,8 @@ module ts {
     export function getInvokedExpression(node: CallLikeExpression): Expression {
         if (node.kind === SyntaxKind.TaggedTemplateExpression) {
             return (<TaggedTemplateExpression>node).tag;
+        } else {
+            //TODO JSX
         }
         
         // Will either be a CallExpression or NewExpression.

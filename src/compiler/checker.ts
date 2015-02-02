@@ -5577,45 +5577,20 @@ module ts {
         function checkJSXElement(node: JSXElement, contextualMapper?: TypeMapper): Type {
             // Grammar checking
             checkGrammarJSXElement(node);
+            return getReturnTypeOfSignature(getResolvedSignature(node));
+        }
+        
+        
+        function checkJSXOpeningElement(node: JSXOpeningElement, contextualMapper?: TypeMapper): Type {
+            
+            var propertiesTable: SymbolTable = {};
+            var typeFlags: TypeFlags;
 
-            var jsxPropertiesTable: SymbolTable = {};
-            var jsxTypeFlags: TypeFlags;
-            
-            //The type property
-            var typeMember = node.symbol.members["type"];
-            var type: Type;
-            if (node.openingElement.tagName.kind === SyntaxKind.Identifier) {
-                var text = (<Identifier>node.openingElement.tagName).text;
-                if (text.toLowerCase() === text) {
-                    type = stringType;
-                } else {
-                    type = checkIdentifier(<Identifier>node.openingElement.tagName);
-                }
-            } else {
-                type = checkQualifiedName(<QualifiedName>node.openingElement.tagName);
-            }
-            
-            var prop = <TransientSymbol>createSymbol(SymbolFlags.Property | SymbolFlags.Transient | typeMember.flags, 'type');
-            prop.declarations = typeMember.declarations;
-            prop.parent = typeMember.parent;
-            prop.valueDeclaration = typeMember.valueDeclaration;
-
-            prop.type = type;
-            prop.target = typeMember;
-            jsxPropertiesTable['type'] = prop;
-            
-            
-            //props property
-            
-            var propsPropertiesTable: SymbolTable = {};
-            var propsTypeFlags: TypeFlags;
-
-            var attributes = node.openingElement.attributes;
-            for (var i = 0; i < attributes.length; i++) {
-                var attr = attributes[i];
-                var member = attr.symbol;
-                var type = attr.initializer ? checkExpression(attr.initializer, contextualMapper) : booleanType;
-                
+            for (var i = 0; i < node.attributes.length; i++) {
+                var memberDecl = node.attributes[i];
+                var member = memberDecl.symbol;
+                var type = memberDecl.initializer ? checkExpression(memberDecl.initializer) : booleanType;
+                typeFlags |= type.flags;
                 var prop = <TransientSymbol>createSymbol(SymbolFlags.Property | SymbolFlags.Transient | member.flags, member.name);
                 prop.declarations = member.declarations;
                 prop.parent = member.parent;
@@ -5625,51 +5600,28 @@ module ts {
 
                 prop.type = type;
                 prop.target = member;
-                
-                var name = attr.name.text;
-                if (name === 'ref' || name === 'key') {
-                    jsxPropertiesTable[prop.name] = prop;
-                    jsxTypeFlags |= type.flags;
-                } else {
-                    propsPropertiesTable[prop.name] = prop;
-                    propsTypeFlags |= type.flags;
-                }
-                
+                member = prop;
+               
+
+                propertiesTable[member.name] = member;
             }
-            
-            
-            var propsMember = node.symbol.members['props'];
-            
-            if (node.children && node.children.length) {
-                var childrenMember = node.openingElement.symbol.members['children'];
-                var prop = <TransientSymbol>createSymbol(SymbolFlags.Property | SymbolFlags.Transient | typeMember.flags, 'children');
-                prop.declarations = childrenMember.declarations;
-                prop.parent = childrenMember.parent;
-                if (childrenMember.valueDeclaration) {
-                    prop.valueDeclaration = childrenMember.valueDeclaration;
-                }
-                
-                var elementTypes = node.children.map( e => checkExpression(e, contextualMapper));
-                prop.type = createArrayType(getUnionType(elementTypes));
-                propsPropertiesTable['children'] = prop;
-            }
-            
-            
-            var prop = <TransientSymbol>createSymbol(SymbolFlags.Property | SymbolFlags.Transient | propsMember.flags, 'props');
-            prop.declarations = propsMember.declarations;
-            prop.parent = propsMember.parent;
-            prop.valueDeclaration = propsMember.valueDeclaration;
-            
-            prop.type = createAnonymousType(node.openingElement.symbol, propsPropertiesTable, emptyArray, emptyArray, undefined, undefined);
-            prop.flags |= TypeFlags.ObjectLiteral | TypeFlags.ContainsObjectLiteral | (propsTypeFlags & TypeFlags.ContainsUndefinedOrNull);
-            prop.target = propsMember;
-            
-            jsxPropertiesTable['props'] = prop;
-            
-            
-            var result = createAnonymousType(node.symbol, jsxPropertiesTable, emptyArray, emptyArray, undefined, undefined);
-            result.flags |= TypeFlags.ObjectLiteral | TypeFlags.ContainsObjectLiteral | (jsxTypeFlags & TypeFlags.ContainsUndefinedOrNull);
+
+            var result = createAnonymousType(node.symbol, propertiesTable, emptyArray, emptyArray, undefined, undefined);
+            result.flags |= TypeFlags.ObjectLiteral | TypeFlags.ContainsObjectLiteral | (typeFlags & TypeFlags.ContainsUndefinedOrNull);
             return result;
+
+        }
+        
+        function checkJSXTag(node: JSXTag): Type {
+            if (node.name.kind === SyntaxKind.Identifier) {
+                var text = (<Identifier>node.name).text;
+                if (text.toLowerCase() === text) {
+                    return stringType;
+                } else {
+                    return checkIdentifier(<Identifier>node.name)
+                }
+            }
+            return checkQualifiedName(<QualifiedName>node.name);
         }
 
         // If a symbol is a synthesized symbol with no value declaration, we assume it is a property. Example of this are the synthesized
@@ -5877,8 +5829,13 @@ module ts {
         function resolveUntypedCall(node: CallLikeExpression): Signature {
             if (node.kind === SyntaxKind.TaggedTemplateExpression) {
                 checkExpression((<TaggedTemplateExpression>node).template);
-            }
-            else {
+            } else if (node.kind === SyntaxKind.JSXElement) {
+                checkExpression((<JSXElement>node).openingElement.tag);
+                checkExpression((<JSXElement>node).openingElement);
+                forEach((<JSXElement>node).children, argument => {
+                    checkExpression(argument);
+                });
+            } else {
                 forEach((<CallExpression>node).arguments, argument => {
                     checkExpression(argument);
                 });
@@ -5920,8 +5877,13 @@ module ts {
                     Debug.assert(templateLiteral.kind === SyntaxKind.NoSubstitutionTemplateLiteral);
                     callIsIncomplete = !!templateLiteral.isUnterminated;
                 }
-            }
-            else {
+            } else if (node.kind === SyntaxKind.JSXElement) {
+                var jsxElement = <JSXElement>node;
+                adjustedArgCount = 2 + jsxElement.children.length;
+
+                // If we are missing the close paren, the call is incomplete.
+                callIsIncomplete = false;
+            } else {
                 var callExpression = <CallExpression>node;
                 if (!callExpression.arguments) {
                     // This only happens when we have something of the form: 'new C'
@@ -6111,8 +6073,10 @@ module ts {
                         args.push(span.expression);
                     });
                 }
-            }
-            else {
+            } else if (node.kind === SyntaxKind.JSXElement) {
+                args = [(<JSXElement>node).openingElement.tag, (<JSXElement>node).openingElement];
+                args = args.concat((<JSXElement>node).children);
+            } else {
                 args = (<CallExpression>node).arguments || emptyArray;
             }
 
@@ -6143,10 +6107,11 @@ module ts {
 
         function resolveCall(node: CallLikeExpression, signatures: Signature[], candidatesOutArray: Signature[]): Signature {
             var isTaggedTemplate = node.kind === SyntaxKind.TaggedTemplateExpression;
+            var isJSXElement = node.kind === SyntaxKind.JSXElement;
 
             var typeArguments: TypeNode[];
 
-            if (!isTaggedTemplate) {
+            if (!isTaggedTemplate && !isJSXElement) {
                 typeArguments = getEffectiveTypeArguments(<CallExpression>node);
 
                 // We already perform checking on the type arguments on the class declaration itself.
@@ -6261,6 +6226,7 @@ module ts {
                         Diagnostics.The_type_argument_for_type_parameter_0_cannot_be_inferred_from_the_usage_Consider_specifying_the_type_arguments_explicitly,
                         typeToString(failedTypeParameter));
 
+                    //TODO JSX
                     reportNoCommonSupertypeError(inferenceCandidates, (<CallExpression>node).expression || (<TaggedTemplateExpression>node).tag, diagnosticChainHead);
                 }
             }
@@ -6454,6 +6420,73 @@ module ts {
             }
             return resolveCall(node, callSignatures, candidatesOutArray);
         }
+        
+        
+        function resolveReactCreateElementType(node: JSXElement): Type {
+            var reactSymbol = resolveName(node, 'React', SymbolFlags.Value | SymbolFlags.ExportValue, Diagnostics.Cannot_find_name_0, 'React');
+            reactSymbol = getExportSymbolOfValueSymbolIfExported(reactSymbol);
+            var type = getTypeOfSymbol(reactSymbol);
+            if (type === unknownType) {
+                return unknownType;
+            } else if (type !== anyType) {
+                var apparentType = getApparentType(type);
+                if (apparentType === unknownType) {
+                    // handle cases when type is Type parameter with invalid constraint
+                    return unknownType;
+                }
+                var prop = getPropertyOfType(apparentType, 'createElement');
+                if (!prop) {
+                    error(node, Diagnostics.Property_0_does_not_exist_on_type_1, 'createElement', 'React');
+                    return unknownType;
+                }
+                return getTypeOfSymbol(prop);
+            } 
+            return anyType;
+        }
+        
+        function resolveJSXElement(node: JSXElement, candidatesOutArray: Signature[]): Signature {
+            
+
+            var funcType: Type = resolveReactCreateElementType(node)
+            
+            var apparentType = getApparentType(funcType);
+
+            if (apparentType === unknownType) {
+                // Another error has already been reported
+                return resolveErrorCall(node);
+            }
+
+            // Technically, this signatures list may be incomplete. We are taking the apparent type,
+            // but we are not including call signatures that may have been added to the Object or
+            // Function interface, since they have none by default. This is a bit of a leap of faith
+            // that the user will not add any.
+            var callSignatures = getSignaturesOfType(apparentType, SignatureKind.Call);
+
+            var constructSignatures = getSignaturesOfType(apparentType, SignatureKind.Construct);
+            // TS 1.0 spec: 4.12
+            // If FuncExpr is of type Any, or of an object type that has no call or construct signatures
+            // but is a subtype of the Function interface, the call is an untyped function call. In an
+            // untyped function call no TypeArgs are permitted, Args can be any argument list, no contextual
+            // types are provided for the argument expressions, and the result is always of type Any.
+            // We exclude union types because we may have a union of function types that happen to have
+            // no common signatures.
+            if (funcType === anyType || (!callSignatures.length && !constructSignatures.length && !(funcType.flags & TypeFlags.Union) && isTypeAssignableTo(funcType, globalFunctionType))) {
+                return resolveUntypedCall(node);
+            }
+            // If FuncExpr's apparent type(section 3.8.1) is a function type, the call is a typed function call.
+            // TypeScript employs overload resolution in typed function calls in order to support functions
+            // with multiple call signatures.
+            if (!callSignatures.length) {
+                if (constructSignatures.length) {
+                    error(node, Diagnostics.Value_of_type_0_is_not_callable_Did_you_mean_to_include_new, typeToString(funcType));
+                }
+                else {
+                    error(node, Diagnostics.Cannot_invoke_an_expression_whose_type_lacks_a_call_signature);
+                }
+                return resolveErrorCall(node);
+            }
+            return resolveCall(node, callSignatures, candidatesOutArray);
+        }
 
         function resolveNewExpression(node: NewExpression, candidatesOutArray: Signature[]): Signature {
             var expressionType = checkExpression(node.expression);
@@ -6546,6 +6579,8 @@ module ts {
                 }
                 else if (node.kind === SyntaxKind.TaggedTemplateExpression) {
                     links.resolvedSignature = resolveTaggedTemplateExpression(<TaggedTemplateExpression>node, candidatesOutArray);
+                } else if (node.kind === SyntaxKind.JSXElement) {
+                    links.resolvedSignature = resolveJSXElement(<JSXElement>node, candidatesOutArray);
                 }
                 else {
                     Debug.fail("Branch in 'getResolvedSignature' should be unreachable.");
@@ -7424,7 +7459,11 @@ module ts {
                     checkYieldExpression(<YieldExpression>node);
                     return unknownType;
                 case SyntaxKind.JSXElement:
-                    return checkJSXElement(<JSXElement>node, contextualMapper);
+                    return checkJSXElement(<JSXElement>node, contextualMapper);    
+                case SyntaxKind.JSXOpeningElement:
+                    return checkJSXOpeningElement(<JSXOpeningElement>node, contextualMapper);
+                case SyntaxKind.JSXTag:
+                    return checkJSXTag((<JSXTag>node));
                 case SyntaxKind.JSXExpression:
                     if ((<JSXExpression>node).expression) {
                         return checkExpression((<JSXExpression>node).expression);

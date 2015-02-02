@@ -237,6 +237,7 @@ module ts {
         // JSX
         JSXElement,
         JSXOpeningElement,
+        JSXTag,
         JSXClosingElement,
         JSXAttribute,
         JSXExpression,
@@ -704,7 +705,7 @@ module ts {
         template: LiteralExpression | TemplateExpression;
     }
 
-    export type CallLikeExpression = CallExpression | NewExpression | TaggedTemplateExpression;
+    export type CallLikeExpression = JSXElement | CallExpression | NewExpression | TaggedTemplateExpression;
 
     export interface TypeAssertion extends UnaryExpression {
         type: TypeNode;
@@ -878,8 +879,12 @@ module ts {
         isCertainlyJSXElement: boolean;
     }
     
-    export interface JSXOpeningElement extends Declaration {
-        tagName: EntityName;
+    export interface JSXTag extends LeftHandSideExpression {
+        name: EntityName;
+    }
+    
+    export interface JSXOpeningElement extends PrimaryExpression, Declaration {
+        tag: JSXTag;
         attributes: NodeArray<JSXAttribute>;
         isSelfClosing: boolean;
     }

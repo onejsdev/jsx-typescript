@@ -2793,7 +2793,7 @@ module ts {
             function emitJSXElement(node: JSXElement) {
                 //porting react
                 var openingElement = node.openingElement;
-                var nameObject = openingElement.tagName;
+                var nameObject = openingElement.tag.name;
                 var attributes = openingElement.attributes;
                 var multiLine = (node.flags & NodeFlags.MultiLine) !== 0;
 

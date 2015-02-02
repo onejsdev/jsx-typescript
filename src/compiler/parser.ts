@@ -268,7 +268,9 @@ module ts {
                     visitNodes(cbNode, (<JSXElement>node).children) ||
                     visitNode(cbNode, (<JSXElement>node).closingElement);
             case SyntaxKind.JSXOpeningElement:
-                return visitNode(cbNode, (<JSXOpeningElement>node).tagName) || visitNodes(cbNode, (<JSXOpeningElement>node).attributes);
+                return visitNode(cbNode, (<JSXOpeningElement>node).tag) || visitNodes(cbNode, (<JSXOpeningElement>node).attributes);
+            case SyntaxKind.JSXTag:
+                return visitNode(cbNode, (<JSXTag>node).name);
             case SyntaxKind.JSXAttribute:
                 return visitNode(cbNode, (<JSXAttribute>node).name) || visitNode(cbNode, (<JSXAttribute>node).initializer);
             case SyntaxKind.JSXExpression:
@@ -3425,7 +3427,7 @@ module ts {
                 node.isCertainlyJSXElement = true;
             }
             
-            var tagName: string = entityNameToString(node.openingElement.tagName);
+            var tagName: string = entityNameToString(node.openingElement.tag.name);
             
             node.children = <NodeArray<JSXText | JSXExpression | JSXElement>>[];
             node.children.pos = getNodePos();
@@ -3484,6 +3486,7 @@ module ts {
                 }
                
             } else {
+                node.children.end = getNodeEnd();
                 // if it's a self closing tag it's pretty sure that we are in a JSXElement
                 node.isCertainlyJSXElement = true;
             }
@@ -3502,7 +3505,9 @@ module ts {
             var node = <JSXOpeningElement>createNode(SyntaxKind.JSXOpeningElement);
             
             parseExpected(SyntaxKind.LessThanToken);
-            node.tagName = parseEntityName(true);
+            node.tag = <JSXTag>createNode(SyntaxKind.JSXTag);
+            node.tag.name = parseEntityName(true);
+            finishNode(node.tag);
             node.attributes = parseList(ParsingContext.JSXAttributes, /*checkForStrictMode*/ false, parseJSXAttribute);
             if (token === SyntaxKind.SlashToken) {
                 node.isSelfClosing = true;
