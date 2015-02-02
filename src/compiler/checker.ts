@@ -1069,7 +1069,7 @@ module ts {
              * Enclosing declaration is optional when we don't want to get qualified name in the enclosing declaration scope
              * Meaning needs to be specified if the enclosing declaration is given
              */
-            function buildSymbolDisplay(symbol: Symbol, writer: SymbolWriter, enclosingDeclaration?: Node, meaning?: SymbolFlags, flags?: SymbolFormatFlags): void {
+            function buildSymbolDisplay(symbol: Symbol, writer: SymbolWriter, enclosingDeclaration?: Node, meaning?: SymbolFlags, flags?: SymbolFormatFlags, typeFlags?: TypeFormatFlags): void {
                 var parentSymbol: Symbol;
                 function appendParentTypeArgumentsAndSymbolName(symbol: Symbol): void {
                     if (parentSymbol) {
@@ -1131,11 +1131,12 @@ module ts {
                     }
                 }
 
-                // Get qualified name 
-                if (enclosingDeclaration &&
-                    // TypeParameters do not need qualification
-                    !(symbol.flags & SymbolFlags.TypeParameter)) {
-
+                // Get qualified name if the symbol is not a type parameter
+                // and there is an enclosing declaration or we specifically
+                // asked for it
+                var isTypeParameter = symbol.flags & SymbolFlags.TypeParameter;
+                var typeFormatFlag = TypeFormatFlags.UseFullyQualifiedType & typeFlags;
+                if (!isTypeParameter && (enclosingDeclaration || typeFormatFlag)) {
                     walkSymbol(symbol, meaning);
                     return;
                 }
@@ -1158,7 +1159,8 @@ module ts {
                         writeTypeReference(<TypeReference>type, flags);
                     }
                     else if (type.flags & (TypeFlags.Class | TypeFlags.Interface | TypeFlags.Enum | TypeFlags.TypeParameter)) {
-                        buildSymbolDisplay(type.symbol, writer, enclosingDeclaration, SymbolFlags.Type);
+                        // The specified symbol flags need to be reinterpreted as type flags
+                        buildSymbolDisplay(type.symbol, writer, enclosingDeclaration, SymbolFlags.Type, SymbolFormatFlags.None, flags);
                     }
                     else if (type.flags & TypeFlags.Tuple) {
                         writeTupleType(<TupleType>type);
@@ -1229,17 +1231,18 @@ module ts {
                 function writeAnonymousType(type: ObjectType, flags: TypeFormatFlags) {
                     // Always use 'typeof T' for type of class, enum, and module objects
                     if (type.symbol && type.symbol.flags & (SymbolFlags.Class | SymbolFlags.Enum | SymbolFlags.ValueModule)) {
-                        writeTypeofSymbol(type);
+                        writeTypeofSymbol(type, flags);
                     }
                     // Use 'typeof T' for types of functions and methods that circularly reference themselves
                     else if (shouldWriteTypeOfFunctionSymbol()) {
-                        writeTypeofSymbol(type);
+                        writeTypeofSymbol(type, flags);
                     }
                     else if (typeStack && contains(typeStack, type)) {
                         // If type is an anonymous type literal in a type alias declaration, use type alias name
                         var typeAlias = getTypeAliasForTypeLiteral(type);
                         if (typeAlias) {
-                            buildSymbolDisplay(typeAlias, writer, enclosingDeclaration, SymbolFlags.Type);
+                            // The specified symbol flags need to be reinterpreted as type flags
+                            buildSymbolDisplay(typeAlias, writer, enclosingDeclaration, SymbolFlags.Type, SymbolFormatFlags.None, flags);
                         }
                         else {
                             // Recursive usage, use any
@@ -1273,10 +1276,10 @@ module ts {
                     }
                 }
 
-                function writeTypeofSymbol(type: ObjectType) {
+                function writeTypeofSymbol(type: ObjectType, typeFormatFlags?: TypeFormatFlags) {
                     writeKeyword(writer, SyntaxKind.TypeOfKeyword);
                     writeSpace(writer);
-                    buildSymbolDisplay(type.symbol, writer, enclosingDeclaration, SymbolFlags.Value);
+                    buildSymbolDisplay(type.symbol, writer, enclosingDeclaration, SymbolFlags.Value, SymbolFormatFlags.None, typeFormatFlags);
                 }
 
                 function getIndexerParameterName(type: ObjectType, indexKind: IndexKind, fallbackName: string): string {
@@ -3416,9 +3419,9 @@ module ts {
 
         // TYPE CHECKING
 
-        var subtypeRelation: Map<boolean> = {};
-        var assignableRelation: Map<boolean> = {};
-        var identityRelation: Map<boolean> = {};
+        var subtypeRelation: Map<RelationComparisonResult> = {};
+        var assignableRelation: Map<RelationComparisonResult> = {};
+        var identityRelation: Map<RelationComparisonResult> = {};
 
         function isTypeIdenticalTo(source: Type, target: Type): boolean {
             return checkTypeRelatedTo(source, target, identityRelation, /*errorNode*/ undefined);
@@ -3453,7 +3456,7 @@ module ts {
         function checkTypeRelatedTo(
             source: Type,
             target: Type,
-            relation: Map<boolean>,
+            relation: Map<RelationComparisonResult>,
             errorNode: Node,
             headMessage?: DiagnosticMessage,
             containingMessageChain?: DiagnosticMessageChain): boolean {
@@ -3461,7 +3464,7 @@ module ts {
             var errorInfo: DiagnosticMessageChain;
             var sourceStack: ObjectType[];
             var targetStack: ObjectType[];
-            var maybeStack: Map<boolean>[];
+            var maybeStack: Map<RelationComparisonResult>[];
             var expandingFlags: number;
             var depth = 0;
             var overflow = false;
@@ -3473,6 +3476,14 @@ module ts {
                 error(errorNode, Diagnostics.Excessive_stack_depth_comparing_types_0_and_1, typeToString(source), typeToString(target));
             }
             else if (errorInfo) {
+                // If we already computed this relation, but in a context where we didn't want to report errors (e.g. overload resolution),
+                // then we'll only have a top-level error (e.g. 'Class X does not implement interface Y') without any details. If this happened,
+                // request a recompuation to get a complete error message. This will be skipped if we've already done this computation in a context
+                // where errors were being reported.
+                if (errorInfo.next === undefined) {
+                    errorInfo = undefined;
+                    isRelatedTo(source, target, errorNode !== undefined, headMessage, /* elaborateErrors */ true);
+                }
                 if (containingMessageChain) {
                     errorInfo = concatenateDiagnosticMessageChains(containingMessageChain, errorInfo);
                 }
@@ -3488,7 +3499,7 @@ module ts {
             // Ternary.True if they are related with no assumptions,
             // Ternary.Maybe if they are related with assumptions of other relationships, or
             // Ternary.False if they are not related.
-            function isRelatedTo(source: Type, target: Type, reportErrors?: boolean, headMessage?: DiagnosticMessage): Ternary {
+            function isRelatedTo(source: Type, target: Type, reportErrors?: boolean, headMessage?: DiagnosticMessage, elaborateErrors = false): Ternary {
                 var result: Ternary;
                 // both types are the same - covers 'they are the same primitive type or both are Any' or the same type parameter cases
                 if (source === target) return Ternary.True;
@@ -3555,14 +3566,20 @@ module ts {
                     // identity relation does not use apparent type
                     var sourceOrApparentType = relation === identityRelation ? source : getApparentType(source);
                     if (sourceOrApparentType.flags & TypeFlags.ObjectType && target.flags & TypeFlags.ObjectType &&
-                        (result = objectTypeRelatedTo(sourceOrApparentType, <ObjectType>target, reportStructuralErrors))) {
+                        (result = objectTypeRelatedTo(sourceOrApparentType, <ObjectType>target, reportStructuralErrors, elaborateErrors))) {
                         errorInfo = saveErrorInfo;
                         return result;
                     }
                 }
                 if (reportErrors) {
                     headMessage = headMessage || Diagnostics.Type_0_is_not_assignable_to_type_1;
-                    reportError(headMessage, typeToString(source), typeToString(target));
+                    var sourceType = typeToString(source);
+                    var targetType = typeToString(target);
+                    if (sourceType === targetType) {
+                        sourceType = typeToString(source, /*enclosingDeclaration*/ undefined, TypeFormatFlags.UseFullyQualifiedType);
+                        targetType = typeToString(target, /*enclosingDeclaration*/ undefined, TypeFormatFlags.UseFullyQualifiedType);
+                    }
+                    reportError(headMessage, sourceType, targetType);
                 }
                 return Ternary.False;
             }
@@ -3646,14 +3663,19 @@ module ts {
             // Third, check if both types are part of deeply nested chains of generic type instantiations and if so assume the types are
             // equal and infinitely expanding. Fourth, if we have reached a depth of 100 nested comparisons, assume we have runaway recursion
             // and issue an error. Otherwise, actually compare the structure of the two types.
-            function objectTypeRelatedTo(source: ObjectType, target: ObjectType, reportErrors: boolean): Ternary {
+            function objectTypeRelatedTo(source: ObjectType, target: ObjectType, reportErrors: boolean, elaborateErrors = false): Ternary {
                 if (overflow) {
                     return Ternary.False;
                 }
                 var id = relation !== identityRelation || source.id < target.id ? source.id + "," + target.id : target.id + "," + source.id;
                 var related = relation[id];
+                //var related: RelationComparisonResult = undefined; // relation[id];
                 if (related !== undefined) {
-                    return related ? Ternary.True : Ternary.False;
+                    // If we computed this relation already and it was failed and reported, or if we're not being asked to elaborate
+                    // errors, we can use the cached value. Otherwise, recompute the relation
+                    if (!elaborateErrors || (related === RelationComparisonResult.FailedAndReported)) {
+                        return related === RelationComparisonResult.Succeeded ? Ternary.True : Ternary.False;
+                    }
                 }
                 if (depth > 0) {
                     for (var i = 0; i < depth; i++) {
@@ -3676,7 +3698,7 @@ module ts {
                 sourceStack[depth] = source;
                 targetStack[depth] = target;
                 maybeStack[depth] = {};
-                maybeStack[depth][id] = true;
+                maybeStack[depth][id] = RelationComparisonResult.Succeeded;
                 depth++;
                 var saveExpandingFlags = expandingFlags;
                 if (!(expandingFlags & 1) && isDeeplyNestedGeneric(source, sourceStack)) expandingFlags |= 1;
@@ -3704,13 +3726,13 @@ module ts {
                 if (result) {
                     var maybeCache = maybeStack[depth];
                     // If result is definitely true, copy assumptions to global cache, else copy to next level up
-                    var destinationCache = result === Ternary.True || depth === 0 ? relation : maybeStack[depth - 1];
-                    copyMap(/*source*/maybeCache, /*target*/destinationCache);
+                    var destinationCache = (result === Ternary.True || depth === 0) ? relation : maybeStack[depth - 1];
+                    copyMap(maybeCache, destinationCache);
                 }
                 else {
                     // A false result goes straight into global cache (when something is false under assumptions it
                     // will also be false without assumptions)
-                    relation[id] = false;
+                    relation[id] = reportErrors ? RelationComparisonResult.FailedAndReported : RelationComparisonResult.Failed;
                 }
                 return result;
             }
@@ -6021,7 +6043,7 @@ module ts {
             return typeArgumentsAreAssignable;
         }
 
-        function checkApplicableSignature(node: CallLikeExpression, args: Node[], signature: Signature, relation: Map<boolean>, excludeArgument: boolean[], reportErrors: boolean) {
+        function checkApplicableSignature(node: CallLikeExpression, args: Node[], signature: Signature, relation: Map<RelationComparisonResult>, excludeArgument: boolean[], reportErrors: boolean) {
             for (var i = 0; i < args.length; i++) {
                 var arg = args[i];
                 var argType: Type;
@@ -6249,7 +6271,7 @@ module ts {
 
             return resolveErrorCall(node);
 
-            function chooseOverload(candidates: Signature[], relation: Map<boolean>) {
+            function chooseOverload(candidates: Signature[], relation: Map<RelationComparisonResult>) {
                 for (var i = 0; i < candidates.length; i++) {
                     if (!hasCorrectArity(node, args, candidates[i])) {
                         continue;
