@@ -3403,12 +3403,9 @@ module ts {
         }
         
         
-        function hasClosingTag(tagName: string): boolean {
-            if (!hasProperty(closingTags, tagName)) {
-                return false;
-            }
+        function hasClosingTag(): boolean {
             var currentPos = getNodePos();
-            return closingTags[tagName].some(pos => pos >= currentPos)
+            return closingTags.some(pos => pos >= currentPos)
         }
         
         function parseJSXElement(speculative = false): JSXElement {
@@ -3432,7 +3429,7 @@ module ts {
             
             
             if (!node.openingElement.isSelfClosing) {
-                if (speculative && !node.isCertainlyJSXElement && !hasClosingTag(tagName)) {
+                if (speculative && !node.isCertainlyJSXElement && !hasClosingTag()) {
                     return null;
                 }
                 
@@ -3469,10 +3466,8 @@ module ts {
                     if (!node.closingElement.tagName || tagName !== entityNameToString(node.closingElement.tagName)) {
                         var length = scanner.getTokenPos() - start;
                         parseErrorAtPosition(start, length, Diagnostics.Expected_corresponding_XJS_closing_tag_for_0, tagName );
-                    } else {
-                        // if there is a closing tag it's pretty sure that we are in a JSXElement
-                        node.isCertainlyJSXElement = true;
                     }
+                    node.isCertainlyJSXElement = true;
                 } else {
                     node.closingElement = <JSXClosingElement>createMissingNode(
                         SyntaxKind.JSXClosingElement, /*reportAtCurrentPosition:*/ true, 

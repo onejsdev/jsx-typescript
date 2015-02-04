@@ -539,8 +539,8 @@ module ts {
             ch > CharacterCodes.maxAsciiCharacter && isUnicodeIdentifierPart(ch, languageVersion);
     }
     
-    export function getClosingTags(sourceText: string, languageVersion: ScriptTarget): Map<number[]> {
-            var closingTags:  Map<number[]> = {};
+    export function getClosingTags(sourceText: string, languageVersion: ScriptTarget): number[] {
+            var closingTags: number[] = [];
             var ch: number;
             var pos: number = 0;      
             var len: number = sourceText.length;
@@ -566,12 +566,7 @@ module ts {
                                     tag += String.fromCharCode(ch);
                                 } else if (ch === CharacterCodes.greaterThan) {
                                     var positions: number[];
-                                    if (hasProperty(closingTags, tag)) {
-                                        positions =  closingTags[tag]
-                                    } else {
-                                        positions =  closingTags[tag]  = [];
-                                    }
-                                    positions.push(tagStartPosition);
+                                    closingTags.push(tagStartPosition);
                                     pos = i + 1;
                                     continue outer;
                                 } else {
