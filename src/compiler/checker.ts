@@ -10005,8 +10005,9 @@ module ts {
             if (isRightSideOfQualifiedNameOrPropertyAccess(entityName)) {
                 entityName = <QualifiedName | PropertyAccessExpression>entityName.parent;
             }
+            
 
-            if (isExpression(entityName)) {
+            if (isExpression(entityName) || entityName.parent.kind === SyntaxKind.JSXTag) {
                 if (getFullWidth(entityName) === 0) {
                     // Missing entity name.
                     return undefined;

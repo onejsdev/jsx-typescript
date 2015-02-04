@@ -1,12 +1,12 @@
-/// <reference path="..\compiler\program.ts"/>
+/// <reference path="../compiler/program.ts"/>
 
 /// <reference path='breakpoints.ts' />
 /// <reference path='outliningElementsCollector.ts' />
 /// <reference path='navigationBar.ts' />
 /// <reference path='signatureHelp.ts' />
 /// <reference path='utilities.ts' />
-/// <reference path='formatting\formatting.ts' />
-/// <reference path='formatting\smartIndenter.ts' />
+/// <reference path='formatting/formatting.ts' />
+/// <reference path='formatting/smartIndenter.ts' />
 
 module ts {
     export var servicesVersion = "0.5"
@@ -1837,7 +1837,9 @@ module ts {
     /** Returns true if node is a name of an object literal property, e.g. "a" in x = { "a": 1 } */
     function isNameOfPropertyAssignment(node: Node): boolean {
         return (node.kind === SyntaxKind.Identifier || node.kind === SyntaxKind.StringLiteral || node.kind === SyntaxKind.NumericLiteral) &&
-            (node.parent.kind === SyntaxKind.PropertyAssignment || node.parent.kind === SyntaxKind.ShorthandPropertyAssignment) && (<PropertyDeclaration>node.parent).name === node;
+            (node.parent.kind === SyntaxKind.PropertyAssignment || node.parent.kind === SyntaxKind.ShorthandPropertyAssignment 
+                || node.parent.kind === SyntaxKind.JSXAttribute ) && 
+            (<PropertyDeclaration>node.parent).name === node;
     }
 
     function isLiteralNameOfPropertyDeclarationOrIndexAccess(node: Node): boolean {
@@ -2316,6 +2318,7 @@ module ts {
             }
             else {
                 var containingObjectLiteral = getContainingObjectLiteralApplicableForCompletion(previousToken);
+                var containingJSXOpeningElement = getContainingJSXOpeningElementApplicableForCompletion(previousToken);
                 if (containingObjectLiteral) {
                     // Object literal expression, look up possible property names from contextual type
                     isMemberCompletion = true;
@@ -2329,6 +2332,20 @@ module ts {
                     if (contextualTypeMembers && contextualTypeMembers.length > 0) {
                         // Add filtered items to the completion list
                         var filteredMembers = filterContextualMembersList(contextualTypeMembers, containingObjectLiteral.properties);
+                        getCompletionEntriesFromSymbols(filteredMembers, activeCompletionSession);
+                    }
+                } else if (containingJSXOpeningElement) {
+                    isMemberCompletion = true;
+
+                    var contextualType = typeInfoResolver.getContextualType(containingJSXOpeningElement);
+                    if (!contextualType) {
+                        return undefined;
+                    }
+
+                    var contextualTypeMembers = typeInfoResolver.getPropertiesOfType(contextualType);
+                    if (contextualTypeMembers && contextualTypeMembers.length > 0) {
+                        // Add filtered items to the completion list
+                        var filteredMembers = filterContextualMembersList(contextualTypeMembers, containingJSXOpeningElement.attributes);
                         getCompletionEntriesFromSymbols(filteredMembers, activeCompletionSession);
                     }
                 }
@@ -2412,6 +2429,33 @@ module ts {
                                 return <ObjectLiteralExpression>parent;
                             }
                             break;
+                    }
+                }
+
+                return undefined;
+            }
+            
+            function getContainingJSXOpeningElementApplicableForCompletion(previousToken: Node): JSXOpeningElement {
+                // The locations in an jsx opening element that are applicable for completion are property name definition locations.
+
+                if (previousToken) {
+                    var parent = previousToken.parent;
+                    switch(previousToken.kind) {
+                        case SyntaxKind.Identifier: //<div |
+                            while (parent && parent.kind === SyntaxKind.QualifiedName || parent.kind === SyntaxKind.JSXTag) {
+                                parent = parent.parent;
+                            }
+                            break;
+                        case SyntaxKind.StringLiteral: //<div attr="something" |
+                        case SyntaxKind.CloseBraceToken: //<div attr={expression} |
+                            if (parent && parent.kind === SyntaxKind.JSXAttribute) {
+                                parent = parent.parent;
+                            }
+                            break;
+                    }
+                    
+                    if (parent && parent.kind === SyntaxKind.JSXOpeningElement) {
+                        return <JSXOpeningElement>parent;
                     }
                 }
 
@@ -2509,7 +2553,9 @@ module ts {
 
                 var existingMemberNames: Map<boolean> = {};
                 forEach(existingMembers, m => {
-                    if (m.kind !== SyntaxKind.PropertyAssignment && m.kind !== SyntaxKind.ShorthandPropertyAssignment) {
+                    if (m.kind !== SyntaxKind.PropertyAssignment && 
+                        m.kind !== SyntaxKind.ShorthandPropertyAssignment && 
+                        m.kind !== SyntaxKind.JSXAttribute) {
                         // Ignore omitted expressions for missing members in the object literal
                         return;
                     }
@@ -4226,6 +4272,7 @@ module ts {
                     // fall through
                     case SyntaxKind.PropertyDeclaration:
                     case SyntaxKind.PropertySignature:
+                    case SyntaxKind.JSXAttribute:
                     case SyntaxKind.Constructor:
                     case SyntaxKind.GetAccessor:
                     case SyntaxKind.SetAccessor:
@@ -4642,6 +4689,7 @@ module ts {
                 case SyntaxKind.PropertySignature:
                 case SyntaxKind.PropertyAssignment:
                 case SyntaxKind.ShorthandPropertyAssignment:
+                case SyntaxKind.JSXAttribute:
                 case SyntaxKind.EnumMember:
                 case SyntaxKind.MethodDeclaration:
                 case SyntaxKind.MethodSignature:
