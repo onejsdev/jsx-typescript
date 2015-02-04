@@ -1,4 +1,4 @@
-///<reference path='..\services.ts' />
+///<reference path='../services.ts' />
 ///<reference path='formattingScanner.ts' />
 ///<reference path='rulesProvider.ts' />
 ///<reference path='references.ts' />
@@ -463,8 +463,26 @@ module ts.formatting {
             }
         }
 
+
+        function insideJSXElement(node: Node) {
+            while (node) {
+                if (node.kind === SyntaxKind.JSXElement || node.kind === SyntaxKind.JSXOpeningElement) {
+                    return true;
+                }
+                node = node.parent;
+            }
+            return false;
+        }
+    
         function processNode(node: Node, contextNode: Node, nodeStartLine: number, indentation: number, delta: number) {
             if (!rangeOverlapsWithStartEnd(originalRange, node.getStart(sourceFile), node.getEnd())) {
+                return;
+            }
+            
+            // TODO JSX
+            // for the moment we completely disable formatting on JSXELement
+            // this is pretty much a hard feature since it needs some form of hard rollback on scanner
+            if (insideJSXElement(node)) {
                 return;
             }
 
