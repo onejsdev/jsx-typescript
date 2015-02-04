@@ -1908,5 +1908,17 @@
         "category": "Error",
         "code": 9001,
         "isEarly":  true
+    },
+    "JSX attributes must only be assigned a non-empty 'expression'.": {
+        "category": "Error",
+        "code": 17000
+    },
+    "JSX elements cannot have multiple attributes with the same name.": {
+        "category": "Error",
+        "code": 17001
+    },
+    "Expected corresponding XJS closing tag for '{0}'": {
+        "category": "Error",
+        "code": 17002
     }
 }

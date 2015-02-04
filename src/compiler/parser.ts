@@ -3444,11 +3444,14 @@ module ts {
                         node.children.push(parseJSXChild());
                         continue;
                     }
-                    if (speculative && token !== SyntaxKind.LessThanSlashToken) {
-                        // that means that we are generaly in case like 
-                        // <div> {<div> {}}</div> to desambiguate those cases
-                        // we forbid the } token in jsx text (use entity);
-                        return null;
+                    if (token !== SyntaxKind.LessThanSlashToken) {
+                        if (speculative) {
+                            // that means that we are generaly in case like 
+                            // <div> {<div> {}}</div> to desambiguate those cases
+                            // we forbid the } token in jsx text (use entity);
+                            return null;
+                        }
+                        parseErrorAtCurrentToken(Diagnostics.Unexpected_token);
                     }
                     break;
                 }
@@ -3465,16 +3468,15 @@ module ts {
                     node.closingElement = parseJSXClosingElement(savedInJSXChild, savedInJSXTag);
                     if (!node.closingElement.tagName || tagName !== entityNameToString(node.closingElement.tagName)) {
                         var length = scanner.getTokenPos() - start;
-                        parseErrorAtPosition(start, length, Diagnostics._0_expected, '</' + tagName + '>');
+                        parseErrorAtPosition(start, length, Diagnostics.Expected_corresponding_XJS_closing_tag_for_0, tagName );
                     } else {
                         // if there is a closing tag it's pretty sure that we are in a JSXElement
                         node.isCertainlyJSXElement = true;
                     }
                 } else {
-                    //TODO better error
                     node.closingElement = <JSXClosingElement>createMissingNode(
                         SyntaxKind.JSXClosingElement, /*reportAtCurrentPosition:*/ true, 
-                        Diagnostics._0_expected, "</" + tagName + ">"
+                        Diagnostics.Expected_corresponding_XJS_closing_tag_for_0,  tagName 
                     );
                     node.children.end = getNodeEnd();
                     //TODO we need to rewind the parser before the token, but normally here we

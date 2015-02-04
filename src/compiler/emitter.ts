@@ -2692,6 +2692,7 @@ module ts {
             };
             
             function transformJSXText(line: string) {
+                //TODO see esprima-fb entities https://github.com/facebook/esprima/blob/fb-harmony/esprima.js#L6850-L6886
                 var index = 0;
                 var result = '';
                 var length = line.length

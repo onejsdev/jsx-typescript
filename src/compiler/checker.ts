@@ -10915,14 +10915,12 @@ module ts {
                     seen[(<Identifier>name).text] = true;
                 }
                 else {
-                    //TODO better error
-                    return grammarErrorOnNode(name, Diagnostics.An_object_literal_cannot_have_multiple_get_Slashset_accessors_with_the_same_name);
+                    return grammarErrorOnNode(name, Diagnostics.JSX_elements_cannot_have_multiple_attributes_with_the_same_name);
                 }
                 
                 if(attr.initializer && attr.initializer.kind === SyntaxKind.JSXExpression && 
                     !(<JSXExpression>attr.initializer).expression) {
-                    //TODO better error
-                    return grammarErrorOnNode(attr.initializer, Diagnostics.Expression_expected);
+                    return grammarErrorOnNode(attr.initializer, Diagnostics.JSX_attributes_must_only_be_assigned_a_non_empty_expression);
                 }
             }
         }

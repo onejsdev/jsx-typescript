@@ -452,5 +452,8 @@ module ts {
         You_cannot_rename_this_element: { code: 8000, category: DiagnosticCategory.Error, key: "You cannot rename this element." },
         yield_expressions_are_not_currently_supported: { code: 9000, category: DiagnosticCategory.Error, key: "'yield' expressions are not currently supported.", isEarly: true },
         Generators_are_not_currently_supported: { code: 9001, category: DiagnosticCategory.Error, key: "Generators are not currently supported.", isEarly: true },
+        JSX_attributes_must_only_be_assigned_a_non_empty_expression: { code: 17000, category: DiagnosticCategory.Error, key: "JSX attributes must only be assigned a non-empty 'expression'." },
+        JSX_elements_cannot_have_multiple_attributes_with_the_same_name: { code: 17001, category: DiagnosticCategory.Error, key: "JSX elements cannot have multiple attributes with the same name." },
+        Expected_corresponding_XJS_closing_tag_for_0: { code: 17002, category: DiagnosticCategory.Error, key: "Expected corresponding XJS closing tag for '{0}'" },
     };
 }

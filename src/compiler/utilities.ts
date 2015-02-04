@@ -478,7 +478,6 @@ module ts {
         if (node.kind === SyntaxKind.TaggedTemplateExpression) {
             return (<TaggedTemplateExpression>node).tag;
         } 
-        //TODO JSX ?
         
         // Will either be a CallExpression or NewExpression.
         return (<CallExpression>node).expression;
