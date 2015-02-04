@@ -3551,7 +3551,7 @@ module ts {
             setInJSXChild(inJSXChild);
             setInJSXTag(inJSXTag)
             parseExpected(SyntaxKind.CloseBraceToken)
-            return node;
+            return finishNode(node);
         }
         
         function parseJSXAttribute(): JSXAttribute {
