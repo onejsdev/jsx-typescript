@@ -4622,8 +4622,10 @@ module ts {
                     case SyntaxKind.ThrowStatement:
                     case SyntaxKind.TryStatement:
                     case SyntaxKind.CatchClause:
-                    //TODO CHECK FOR JSXExpression OR Element
                     case SyntaxKind.JSXElement:
+                    case SyntaxKind.JSXAttribute:
+                    case SyntaxKind.JSXOpeningElement:
+                    case SyntaxKind.JSXExpression:
                         return forEachChild(node, isAssignedIn);
                 }
                 return false;
@@ -5263,6 +5265,27 @@ module ts {
 
             return undefined;
         }
+        
+        function getContextualTypeForJSXAttribute(attribute: JSXAttribute) {
+            
+            var openingElement = <JSXOpeningElement>attribute.parent;
+            var type = getContextualType(openingElement);
+            if (type) {
+                // For a (non-symbol) computed property, there is no reason to look up the name
+                // in the type. It will just be "__computed", which does not appear in any
+                // SymbolTable.
+                var symbolName = getSymbolOfNode(attribute).name;
+                var propertyType = getTypeOfPropertyOfContextualType(type, symbolName);
+                if (propertyType) {
+                    return propertyType;
+                }
+                
+                return isNumericName(attribute.name) && getIndexTypeOfContextualType(type, IndexKind.Number) ||
+                    getIndexTypeOfContextualType(type, IndexKind.String);
+            }
+
+            return undefined;
+        }
 
         // In an array literal contextually typed by a type T, the contextual type of an element expression at index N is
         // the type of the property with the numeric name N in T, if one exists. Otherwise, it is the type of the numeric
@@ -5323,7 +5346,13 @@ module ts {
                 case SyntaxKind.ParenthesizedExpression:
                     return getContextualType(<ParenthesizedExpression>parent);
                 
-                //TODO JSX
+                case SyntaxKind.JSXElement:
+                    return getContextualTypeForArgument(<JSXElement>parent, node);
+                case SyntaxKind.JSXExpression:
+                    return getContextualType(<JSXExpression>parent);
+                case SyntaxKind.JSXAttribute:
+                    return getContextualTypeForJSXAttribute(<JSXAttribute>parent);
+                    
             }
             return undefined;
         }
