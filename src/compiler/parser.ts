@@ -264,11 +264,9 @@ module ts {
             case SyntaxKind.ExternalModuleReference:
                 return visitNode(cbNode, (<ExternalModuleReference>node).expression);
             case SyntaxKind.JSXElement:
-                return visitNode(cbNode, (<JSXElement>node).openingElement) ||
-                    visitNodes(cbNode, (<JSXElement>node).children) ||
-                    visitNode(cbNode, (<JSXElement>node).closingElement);
+                return visitNode(cbNode, (<JSXElement>node).openingElement) || visitNodes(cbNodes, (<JSXElement>node).children) || visitNode(cbNode, (<JSXElement>node).closingElement);
             case SyntaxKind.JSXOpeningElement:
-                return visitNode(cbNode, (<JSXOpeningElement>node).tag) || visitNodes(cbNode, (<JSXOpeningElement>node).attributes);
+                return visitNode(cbNode, (<JSXOpeningElement>node).tag) || visitNodes(cbNodes, (<JSXOpeningElement>node).attributes);
             case SyntaxKind.JSXTag:
                 return visitNode(cbNode, (<JSXTag>node).name);
             case SyntaxKind.JSXAttribute:
