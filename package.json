@@ -29,7 +29,7 @@
     "preferGlobal": true,
     "main": "./bin/typescriptServices.js",
     "bin": {
-        "tsc": "./bin/jsx-tsc"
+        "jsx-tsc": "./bin/jsx-tsc"
     },
     "engines": {
         "node": ">=0.8.0"
