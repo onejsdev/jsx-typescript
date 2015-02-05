@@ -1,0 +1,320 @@
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(3,2): error TS1003: Identifier expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(4,3): error TS1003: Identifier expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(5,2): error TS1003: Identifier expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(6,2): error TS2304: Cannot find name 'a'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(6,4): error TS1005: '>' expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(6,4): error TS2304: Cannot find name 'b'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(6,5): error TS1005: ';' expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(6,6): error TS2304: Cannot find name 'd'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(6,9): error TS1109: Expression expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(6,10): error TS1109: Expression expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(7,2): error TS2304: Cannot find name 'a'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(7,4): error TS1109: Expression expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(8,4): error TS17002: Expected corresponding XJS closing tag for 'a'
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(9,2): error TS2304: Cannot find name 'a'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(9,4): error TS1005: '>' expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(9,4): error TS2304: Cannot find name 'foo'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(9,7): error TS1005: ';' expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(9,13): error TS1002: Unterminated string literal.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(10,2): error TS2304: Cannot find name 'a'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(10,3): error TS1005: ';' expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(10,4): error TS2304: Cannot find name 'b'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(10,7): error TS1003: Identifier expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(10,8): error TS1005: '>' expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(10,8): error TS2304: Cannot find name 'b'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(10,10): error TS1109: Expression expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(11,3): error TS1003: Identifier expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(11,5): error TS1003: Identifier expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(11,11): error TS1005: '>' expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(11,12): error TS2304: Cannot find name 'b'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(11,16): error TS1109: Expression expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(12,2): error TS2304: Cannot find name 'a'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(12,5): error TS1003: Identifier expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(12,13): error TS1005: '>' expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(12,14): error TS2304: Cannot find name 'c'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(12,16): error TS1109: Expression expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(13,2): error TS2304: Cannot find name 'a'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(13,8): error TS17002: Expected corresponding XJS closing tag for 'a.b.c'
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(14,2): error TS1003: Identifier expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(14,7): error TS1003: Identifier expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(15,2): error TS2304: Cannot find name 'a'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(15,4): error TS1003: Identifier expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(15,9): error TS1003: Identifier expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(16,2): error TS2304: Cannot find name 'a'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(16,4): error TS1005: ']' expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(16,4): error TS2304: Cannot find name 'foo'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(16,7): error TS1005: ';' expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(16,8): error TS1109: Expression expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(16,10): error TS1003: Identifier expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(16,11): error TS1005: '>' expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(16,11): error TS2304: Cannot find name 'a'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(16,13): error TS2304: Cannot find name 'foo'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(16,18): error TS1109: Expression expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(17,1): error TS2352: Neither type 'string' nor type 'any[]' is assignable to the other.
+  Property 'push' is missing in type 'String'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(17,2): error TS2304: Cannot find name 'a'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(17,4): error TS1005: ']' expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(17,9): error TS1005: ';' expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(17,10): error TS1109: Expression expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(17,12): error TS1003: Identifier expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(17,13): error TS1005: '>' expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(17,13): error TS2304: Cannot find name 'a'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(17,22): error TS1109: Expression expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(18,2): error TS2304: Cannot find name 'a'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(19,2): error TS2304: Cannot find name 'a'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(19,4): error TS1005: '>' expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(19,4): error TS2304: Cannot find name 'b'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(19,5): error TS1005: ';' expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(19,8): error TS1109: Expression expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(19,9): error TS1109: Expression expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(20,9): error TS2365: Operator '<' cannot be applied to types 'boolean' and 'RegExp'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(20,24): error TS2304: Cannot find name 'div'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(20,28): error TS2304: Cannot find name 'two'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(20,33): error TS1161: Unterminated regular expression literal.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(21,9): error TS2365: Operator '<' cannot be applied to types 'boolean' and 'RegExp'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(21,9): error TS2365: Operator '>' cannot be applied to types 'boolean' and '{ "str": any; }'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(21,51): error TS2304: Cannot find name 'div'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(21,55): error TS2304: Cannot find name 'two'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(21,60): error TS1161: Unterminated regular expression literal.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(22,2): error TS2304: Cannot find name 'a'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(22,10): error TS1005: ':' expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(22,11): error TS1128: Declaration or statement expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(22,13): error TS1003: Identifier expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(22,14): error TS1005: '>' expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(22,14): error TS2304: Cannot find name 'a'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(22,16): error TS1109: Expression expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(23,20): error TS1003: Identifier expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(24,2): error TS2304: Cannot find name 'div'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(24,6): error TS1005: '>' expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(24,6): error TS2304: Cannot find name 'className'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(24,15): error TS1005: ';' expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(24,21): error TS1109: Expression expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(25,2): error TS2304: Cannot find name 'div'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(25,6): error TS1005: '>' expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(25,7): error TS2304: Cannot find name 'props'.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(25,15): error TS1109: Expression expected.
+tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts(25,16): error TS1109: Expression expected.
+
+
+==== tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.ts (95 errors) ====
+    declare var React: any;
+    
+    </>;
+     ~
+!!! error TS1003: Identifier expected.
+    <a: />;
+      ~
+!!! error TS1003: Identifier expected.
+    <:a />;
+     ~
+!!! error TS1003: Identifier expected.
+    <a b=d />;
+     ~
+!!! error TS2304: Cannot find name 'a'.
+       ~
+!!! error TS1005: '>' expected.
+       ~
+!!! error TS2304: Cannot find name 'b'.
+        ~
+!!! error TS1005: ';' expected.
+         ~
+!!! error TS2304: Cannot find name 'd'.
+            ~
+!!! error TS1109: Expression expected.
+             ~
+!!! error TS1109: Expression expected.
+    <a>;
+     ~
+!!! error TS2304: Cannot find name 'a'.
+       ~
+!!! error TS1109: Expression expected.
+    <a></b>;
+       ~~~~
+!!! error TS17002: Expected corresponding XJS closing tag for 'a'
+    <a foo="bar;
+     ~
+!!! error TS2304: Cannot find name 'a'.
+       ~~~
+!!! error TS1005: '>' expected.
+       ~~~
+!!! error TS2304: Cannot find name 'foo'.
+          ~
+!!! error TS1005: ';' expected.
+                
+!!! error TS1002: Unterminated string literal.
+    <a:b></b>;
+     ~
+!!! error TS2304: Cannot find name 'a'.
+      ~
+!!! error TS1005: ';' expected.
+       ~
+!!! error TS2304: Cannot find name 'b'.
+          ~
+!!! error TS1003: Identifier expected.
+           ~
+!!! error TS1005: '>' expected.
+           ~
+!!! error TS2304: Cannot find name 'b'.
+             ~
+!!! error TS1109: Expression expected.
+    <a:b.c></a:b.c>;
+      ~
+!!! error TS1003: Identifier expected.
+        ~
+!!! error TS1003: Identifier expected.
+              ~
+!!! error TS1005: '>' expected.
+               ~
+!!! error TS2304: Cannot find name 'b'.
+                   ~
+!!! error TS1109: Expression expected.
+    <a.b:c></a.b:c>;
+     ~
+!!! error TS2304: Cannot find name 'a'.
+        ~
+!!! error TS1003: Identifier expected.
+                ~
+!!! error TS1005: '>' expected.
+                 ~
+!!! error TS2304: Cannot find name 'c'.
+                   ~
+!!! error TS1109: Expression expected.
+    <a.b.c></a>;
+     ~
+!!! error TS2304: Cannot find name 'a'.
+           ~~~~
+!!! error TS17002: Expected corresponding XJS closing tag for 'a.b.c'
+    <.a></.a>;
+     ~
+!!! error TS1003: Identifier expected.
+          ~
+!!! error TS1003: Identifier expected.
+    <a.></a.>;
+     ~
+!!! error TS2304: Cannot find name 'a'.
+       ~
+!!! error TS1003: Identifier expected.
+            ~
+!!! error TS1003: Identifier expected.
+    <a[foo]></a[foo]>;
+     ~
+!!! error TS2304: Cannot find name 'a'.
+       ~~~
+!!! error TS1005: ']' expected.
+       ~~~
+!!! error TS2304: Cannot find name 'foo'.
+          ~
+!!! error TS1005: ';' expected.
+           ~
+!!! error TS1109: Expression expected.
+             ~
+!!! error TS1003: Identifier expected.
+              ~
+!!! error TS1005: '>' expected.
+              ~
+!!! error TS2304: Cannot find name 'a'.
+                ~~~
+!!! error TS2304: Cannot find name 'foo'.
+                     ~
+!!! error TS1109: Expression expected.
+    <a['foo']></a['foo']>;
+    ~~~~~~~~
+!!! error TS2352: Neither type 'string' nor type 'any[]' is assignable to the other.
+!!! error TS2352:   Property 'push' is missing in type 'String'.
+     ~
+!!! error TS2304: Cannot find name 'a'.
+       ~~~~~
+!!! error TS1005: ']' expected.
+            ~
+!!! error TS1005: ';' expected.
+             ~
+!!! error TS1109: Expression expected.
+               ~
+!!! error TS1003: Identifier expected.
+                ~
+!!! error TS1005: '>' expected.
+                ~
+!!! error TS2304: Cannot find name 'a'.
+                         ~
+!!! error TS1109: Expression expected.
+    <a><a />;
+     ~
+!!! error TS2304: Cannot find name 'a'.
+    <a b={}>;
+     ~
+!!! error TS2304: Cannot find name 'a'.
+       ~
+!!! error TS1005: '>' expected.
+       ~
+!!! error TS2304: Cannot find name 'b'.
+        ~
+!!! error TS1005: ';' expected.
+           ~
+!!! error TS1109: Expression expected.
+            ~
+!!! error TS1109: Expression expected.
+    var x = <div>one</div><div>two</div>;;
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS2365: Operator '<' cannot be applied to types 'boolean' and 'RegExp'.
+                           ~~~
+!!! error TS2304: Cannot find name 'div'.
+                               ~~~
+!!! error TS2304: Cannot find name 'two'.
+                                    
+!!! error TS1161: Unterminated regular expression literal.
+    var x = <div>one</div> /* intervening comment */ <div>two</div>;;
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS2365: Operator '<' cannot be applied to types 'boolean' and 'RegExp'.
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                                                      ~~~
+!!! error TS2304: Cannot find name 'div'.
+                                                          ~~~
+!!! error TS2304: Cannot find name 'two'.
+                                                               
+!!! error TS1161: Unterminated regular expression literal.
+    <a>{"str";}</a>;
+    ~~~~~~~~~
+!!! error TS2365: Operator '>' cannot be applied to types 'boolean' and '{ "str": any; }'.
+     ~
+!!! error TS2304: Cannot find name 'a'.
+             ~
+!!! error TS1005: ':' expected.
+              ~
+!!! error TS1128: Declaration or statement expected.
+                ~
+!!! error TS1003: Identifier expected.
+                 ~
+!!! error TS1005: '>' expected.
+                 ~
+!!! error TS2304: Cannot find name 'a'.
+                   ~
+!!! error TS1109: Expression expected.
+    <span className="a", id="b" />;
+                       ~
+!!! error TS1003: Identifier expected.
+    <div className"app">;
+     ~~~
+!!! error TS2304: Cannot find name 'div'.
+         ~~~~~~~~~
+!!! error TS1005: '>' expected.
+         ~~~~~~~~~
+!!! error TS2304: Cannot find name 'className'.
+                  ~~~~~
+!!! error TS1005: ';' expected.
+                        ~
+!!! error TS1109: Expression expected.
+    <div {props} />;
+     ~~~
+!!! error TS2304: Cannot find name 'div'.
+         ~
+!!! error TS1005: '>' expected.
+          ~~~~~
+!!! error TS2304: Cannot find name 'props'.
+                  ~
+!!! error TS1109: Expression expected.
+                   ~
+!!! error TS1109: Expression expected.
+    
+    
+    //<div>stuff</div {...props}>;
+    //<div {...props}>stuff</div {...props}>;

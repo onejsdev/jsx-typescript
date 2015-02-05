@@ -1,0 +1,340 @@
+=== tests/cases/conformance/jsx/jsxReactTestSuite.ts ===
+declare var React: any;
+>React : any
+
+declare var Component:any;
+>Component : any
+
+declare var Composite:any;
+>Composite : any
+
+declare var Composite2:any;
+>Composite2 : any
+
+declare var Namespace:any;
+>Namespace : any
+
+declare var foo: any;
+>foo : any
+
+declare var bar: any;
+>bar : any
+
+declare var y:any;
+>y : any
+
+declare var hasOwnProperty:any;
+>hasOwnProperty : any
+
+<div>text</div>;
+><div>text</div> : any
+><div> : {}
+>div : unknown
+>div : unknown
+
+<div>
+><div>  {this.props.children}</div> : any
+><div> : {}
+>div : unknown
+
+  {this.props.children}
+>this.props.children : any
+>this.props : any
+>this : any
+>props : any
+>children : any
+
+</div>;
+>div : unknown
+
+<div>
+><div>  <div><br /></div>  <Component>{foo}<br />{bar}</Component>  <br /></div> : any
+><div> : {}
+>div : unknown
+
+  <div><br /></div>
+><div><br /></div> : any
+><div> : {}
+>div : unknown
+><br /> : any
+><br /> : {}
+>br : unknown
+>div : unknown
+
+  <Component>{foo}<br />{bar}</Component>
+><Component>{foo}<br />{bar}</Component> : any
+><Component> : {}
+>Component : any
+>foo : any
+><br /> : any
+><br /> : {}
+>br : unknown
+>bar : any
+>Component : unknown
+
+  <br />
+><br /> : any
+><br /> : {}
+>br : unknown
+
+</div>;
+>div : unknown
+
+
+
+<Composite>
+><Composite>    {this.props.children}</Composite> : any
+><Composite> : {}
+>Composite : any
+
+    {this.props.children}
+>this.props.children : any
+>this.props : any
+>this : any
+>props : any
+>children : any
+
+</Composite>;
+>Composite : unknown
+
+
+<Composite>
+><Composite>    <Composite2 /></Composite> : any
+><Composite> : {}
+>Composite : any
+
+    <Composite2 />
+><Composite2 /> : any
+><Composite2 /> : {}
+>Composite2 : any
+
+</Composite>;
+>Composite : unknown
+
+
+var x =
+>x : any
+
+  <div
+><div    attr1={      "foo" + "bar"    }    attr2={      "foo" + "bar" +            "baz" + "bug"    }    attr3={      "foo" + "bar" +      "baz" + "bug"      // Extra line here.    }    attr4="baz">  </div> : any
+><div    attr1={      "foo" + "bar"    }    attr2={      "foo" + "bar" +            "baz" + "bug"    }    attr3={      "foo" + "bar" +      "baz" + "bug"      // Extra line here.    }    attr4="baz"> : { attr1: string; attr2: string; attr3: string; attr4: string; }
+>div : unknown
+
+    attr1={
+>attr1 : string
+
+      "foo" + "bar"
+>"foo" + "bar" : string
+    }
+    attr2={
+>attr2 : string
+
+      "foo" + "bar" +
+>"foo" + "bar" +            "baz" + "bug" : string
+>"foo" + "bar" +            "baz" : string
+>"foo" + "bar" : string
+      
+      "baz" + "bug"
+    }
+    attr3={
+>attr3 : string
+
+      "foo" + "bar" +
+>"foo" + "bar" +      "baz" + "bug" : string
+>"foo" + "bar" +      "baz" : string
+>"foo" + "bar" : string
+
+      "baz" + "bug"
+      // Extra line here.
+    }
+    attr4="baz">
+>attr4 : string
+
+  </div>;
+>div : unknown
+
+(
+>(  <div>    {/* A comment at the beginning */}    {/* A second comment at the beginning */}    <span>      {/* A nested comment */}    </span>    {/* A sandwiched comment */}    <br />    {/* A comment at the end */}    {/* A second comment at the end */}  </div>) : any
+
+  <div>
+><div>    {/* A comment at the beginning */}    {/* A second comment at the beginning */}    <span>      {/* A nested comment */}    </span>    {/* A sandwiched comment */}    <br />    {/* A comment at the end */}    {/* A second comment at the end */}  </div> : any
+><div> : {}
+>div : unknown
+
+    {/* A comment at the beginning */}
+    {/* A second comment at the beginning */}
+    <span>
+><span>      {/* A nested comment */}    </span> : any
+><span> : {}
+>span : unknown
+
+      {/* A nested comment */}
+    </span>
+>span : unknown
+
+    {/* A sandwiched comment */}
+    <br />
+><br /> : any
+><br /> : {}
+>br : unknown
+
+    {/* A comment at the end */}
+    {/* A second comment at the end */}
+  </div>
+>div : unknown
+
+);
+
+
+(
+>(  <div    /* a multi-line       comment */    attr1="foo">    <span // a double-slash comment      attr2="bar"    />  </div>) : any
+
+  <div
+><div    /* a multi-line       comment */    attr1="foo">    <span // a double-slash comment      attr2="bar"    />  </div> : any
+><div    /* a multi-line       comment */    attr1="foo"> : { attr1: string; }
+>div : unknown
+
+    /* a multi-line
+       comment */
+    attr1="foo">
+>attr1 : string
+
+    <span // a double-slash comment
+><span // a double-slash comment      attr2="bar"    /> : any
+><span // a double-slash comment      attr2="bar"    /> : { attr2: string; }
+>span : unknown
+
+      attr2="bar"
+>attr2 : string
+
+    />
+  </div>
+>div : unknown
+
+);
+
+
+<div>&nbsp;</div>;
+><div>&nbsp;</div> : any
+><div> : {}
+>div : unknown
+>div : unknown
+
+<div>&nbsp; </div>;
+><div>&nbsp; </div> : any
+><div> : {}
+>div : unknown
+>div : unknown
+
+<hasOwnProperty>testing</hasOwnProperty>;
+><hasOwnProperty>testing</hasOwnProperty> : any
+><hasOwnProperty> : {}
+>hasOwnProperty : any
+>hasOwnProperty : unknown
+
+
+<Component constructor="foo" />;
+><Component constructor="foo" /> : any
+><Component constructor="foo" /> : { constructor: string; }
+>Component : any
+>constructor : string
+
+<Namespace.Component />;
+><Namespace.Component /> : any
+><Namespace.Component /> : {}
+>Namespace : any
+>Component : any
+
+
+<Namespace.DeepNamespace.Component />;
+><Namespace.DeepNamespace.Component /> : any
+><Namespace.DeepNamespace.Component /> : {}
+>Namespace : any
+>DeepNamespace : any
+>Component : any
+
+
+/* Need Spread Attribute
+ *   
+  it('wraps props in React.__spread for spread attributes', function() {
+    var code =
+      '<Component { ... x } y\n' +
+      '={2 } z />';
+    var result =
+      'React.createElement(Component, React.__spread({},    x , {y: \n' +
+      '2, z: true}))';
+
+    expect(transform(code).code).toBe(result);
+  });
+
+  it('adds appropriate newlines when using spread attribute', function() {
+    var code =
+      '<Component\n' +
+      '  {...this.props}\n' +
+      '  sound="moo" />';
+    var result =
+      'React.createElement(Component, React.__spread({}, \n' +
+      '  this.props, \n' +
+      '  {sound: "moo"}))';
+
+    expect(transform(code).code).toBe(result);
+  });
+  */
+
+<font-face />;
+><font-face /> : any
+><font-face /> : {}
+>font-face : unknown
+
+<Component x={y} />;
+><Component x={y} /> : any
+><Component x={y} /> : { x: any; }
+>Component : any
+>x : any
+>y : any
+
+<x-component />;
+><x-component /> : any
+><x-component /> : {}
+>x-component : unknown
+
+
+/* Need Spread Attribute
+ * 
+  it('calls assign with a new target object for spreads', function() {
+    expectObjectAssign(
+      '<Component {...x} />'
+    ).toBeCalledWith({}, x);
+  });
+  
+  it('calls assign with an empty object when the spread is first', function() {
+    expectObjectAssign(
+      '<Component { ...x } y={2} />'
+    ).toBeCalledWith({}, x, { y: 2 });
+  });
+
+  it('coalesces consecutive properties into a single object', function() {
+    expectObjectAssign(
+      '<Component { ... x } y={2} z />'
+    ).toBeCalledWith({}, x, { y: 2, z: true });
+  });
+
+  it('avoids an unnecessary empty object when spread is not first', function() {
+    expectObjectAssign(
+      '<Component x={1} {...y} />'
+    ).toBeCalledWith({x: 1}, y);
+  });
+
+  it('passes the same value multiple times to React.__spread', function() {
+    expectObjectAssign(
+      '<Component x={1} y="2" {...z} {...z}><Child /></Component>'
+    ).toBeCalledWith({x: 1, y: "2"}, z, z);
+  });
+
+  it('evaluates sequences before passing them to React.__spread', function() {
+    expectObjectAssign(
+      '<Component x="1" {...(z = { y: 2 }, z)} z={3}>Text</Component>'
+    ).toBeCalledWith({x: "1"}, { y: 2 }, {z: 3});
+  });
+ */
+

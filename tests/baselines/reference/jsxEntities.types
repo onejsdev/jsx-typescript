@@ -1,0 +1,41 @@
+=== tests/cases/conformance/jsx/jsxEntities.ts ===
+declare var React: any;
+>React : any
+
+<div>&amp;</div>;
+><div>&amp;</div> : any
+><div> : {}
+>div : unknown
+>div : unknown
+
+<div>&gt;</div>;
+><div>&gt;</div> : any
+><div> : {}
+>div : unknown
+>div : unknown
+
+<div>&lt;</div>;
+><div>&lt;</div> : any
+><div> : {}
+>div : unknown
+>div : unknown
+
+<div>&nbsp;</div>;
+><div>&nbsp;</div> : any
+><div> : {}
+>div : unknown
+>div : unknown
+
+<div>&#250;</div>;
+><div>&#250;</div> : any
+><div> : {}
+>div : unknown
+>div : unknown
+
+<div>&#x2297;</div>;
+><div>&#x2297;</div> : any
+><div> : {}
+>div : unknown
+>div : unknown
+
+

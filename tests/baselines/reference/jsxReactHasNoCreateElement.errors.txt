@@ -1,0 +1,12 @@
+tests/cases/conformance/jsx/jsxReactHasNoCreateElement.ts(6,1): error TS2339: Property 'createElement' does not exist on type 'React'.
+
+
+==== tests/cases/conformance/jsx/jsxReactHasNoCreateElement.ts (1 errors) ====
+    module React {
+        export var foo;
+    }
+    
+    
+    <div/>  
+    ~~~~~~
+!!! error TS2339: Property 'createElement' does not exist on type 'React'.

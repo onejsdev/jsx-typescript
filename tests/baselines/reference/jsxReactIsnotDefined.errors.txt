@@ -1,0 +1,7 @@
+tests/cases/conformance/jsx/jsxReactIsnotDefined.ts(1,1): error TS2304: Cannot find name 'React'.
+
+
+==== tests/cases/conformance/jsx/jsxReactIsnotDefined.ts (1 errors) ====
+    <div/>  
+    ~~~~~~
+!!! error TS2304: Cannot find name 'React'.

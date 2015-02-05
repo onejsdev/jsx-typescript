@@ -1,0 +1,91 @@
+//// [jsxEsprimaFbTestSuite.ts]
+declare var React: any;
+declare var 日本語;
+declare var AbC_def;
+declare var LeftRight;
+declare var x;
+declare var a;
+
+<a />;
+
+//<n:a n:v />; Namespace unsuported
+
+//<a n:foo="bar"> {value} <b><c /></b></a>;  Namespace unsuported
+
+<a b={" "} c=" " d="&amp;" e="id=1&group=2" f="&#123456789" g="&#123*;" h="&#x;" />;
+
+<a b="&notanentity;" />;
+<a
+/>;
+
+<日本語></日本語>;
+
+<AbC_def
+  test="&#x0026;&#38;">
+bar
+baz
+</AbC_def>;
+
+<a b={x ? <c /> : <d />} />;
+
+<a>{}</a>;
+
+<a>{/* this is a comment */}</a>;
+
+<div>@test content</div>;
+
+<div><br />7x invalid-js-identifier</div>;
+
+<LeftRight left=<a /> right=<b>monkeys /> gorillas</b> />;
+
+<a.b></a.b>;
+
+<a.b.c></a.b.c>;
+
+(<div />) < x;
+
+//spread unsupported
+//<div {...props} />;
+
+//<div {...props} post="attribute" />;
+
+//<div pre="leading" pre2="attribute" {...props}></div>;
+
+<a>    </a>;
+
+//<a .../*hai*/asdf/>
+
+//// [jsxEsprimaFbTestSuite.js]
+React.createElement("a", null);
+//<n:a n:v />; Namespace unsuported
+//<a n:foo="bar"> {value} <b><c /></b></a>;  Namespace unsuported
+React.createElement("a", { b: " ", c: " ", d: "&", e: "id=1&group=2", f: "&#123456789", g: "&#123*;", h: "&#x;" });
+React.createElement("a", { b: "&notanentity;" });
+React.createElement(
+    "a",
+    null
+);
+React.createElement(日本語, null);
+React.createElement(
+    AbC_def,
+    {
+        test: "&&"
+    },
+    "bar" + ' ' +
+    "baz"
+);
+React.createElement("a", { b: x ? React.createElement("c", null) : React.createElement("d", null) });
+React.createElement("a", null);
+React.createElement("a", null);
+React.createElement("div", null, "@test content" );
+React.createElement("div", null, React.createElement("br", null), "7x invalid-js-identifier" );
+React.createElement(LeftRight, { left: React.createElement("a", null), right: React.createElement("b", null, "monkeys /> gorillas" ) });
+React.createElement(a.b, null);
+React.createElement(a.b.c, null);
+(React.createElement("div", null)) < x;
+//spread unsupported
+//<div {...props} />;
+//<div {...props} post="attribute" />;
+//<div pre="leading" pre2="attribute" {...props}></div>;
+React.createElement("a", null, "    " );
+//<a .../*hai*/asdf/> 
