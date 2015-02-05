@@ -1,5 +1,5 @@
 declare var React: {
-    createElement(el: string, props: { attribute1: string; attribute2: boolean }, firstChild: string, ...children: string[]);
+    createElement(el: string, props: { attribute1: string; attribute2: boolean }, firstChild: string, ...children: string[]): { notAString: boolean };
 }
 
 class NotAString {
