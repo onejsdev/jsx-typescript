@@ -514,6 +514,8 @@ module ts {
             case SyntaxKind.NoSubstitutionTemplateLiteral:
             case SyntaxKind.OmittedExpression:
             case SyntaxKind.JSXElement:
+            case SyntaxKind.JSXOpeningElement:
+            case SyntaxKind.JSXTag:
             case SyntaxKind.JSXExpression:
                 return true;
             case SyntaxKind.QualifiedName:
@@ -521,9 +523,9 @@ module ts {
                     node = node.parent;
                 }
 
-                return node.parent.kind === SyntaxKind.TypeQuery;
+                return node.parent.kind === SyntaxKind.TypeQuery || node.parent.kind === SyntaxKind.JSXTag;
             case SyntaxKind.Identifier:
-                if (node.parent.kind === SyntaxKind.TypeQuery) {
+                if (node.parent.kind === SyntaxKind.TypeQuery || node.parent.kind === SyntaxKind.JSXTag) {
                     return true;
                 }
             // fall through
