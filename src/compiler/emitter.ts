@@ -2691,18 +2691,20 @@ module ts {
                 diams: '\u2666'
             };
             
+            var regexLeadingZeros = new RegExp('^0+(?!$)')
+            
             function transformJSXText(line: string) {
-                //TODO see esprima-fb entities https://github.com/facebook/esprima/blob/fb-harmony/esprima.js#L6850-L6886
                 var index = 0;
                 var result = '';
                 var length = line.length
                 while(index < length) {
                     var ch = line[index];
-                    var str = "";
-                    var entity = "";
+                    index++;
                     if (ch === "&") {
                         var count = 0
-                        index++;
+                        var str = "";
+                        var entity: string;
+                        var savedIndex = index;
                         while (index < length && count++ < 10) {
                             ch = line[index++];
                             if (ch === ";") {
@@ -2710,21 +2712,36 @@ module ts {
                             }
                             str += ch;
                         }
-                        //TODO perhaps we should report an error if entities is not finished 
-                        //(count === 10 || index === length)
-                        if (str[0] === "#" && str[1] === "x") {
-                            entity = String.fromCharCode(parseInt(str.substr(2), 16));
-                        } else if (str[0] === "#") {
-                            entity = String.fromCharCode(parseInt(str.substr(1), 10));
-                        } else {
-                            entity = XHTMLEntities[str];
-                        }
+                        
+                        if (ch === ';') {
+                            if (str[0] === "#") {
 
-                        result += entity;
+                                var code: number;
+                                if (str[1] === 'x') {
+                                    code = +('0' + str.substr(1));
+                                } else {
+                                    // Removing leading zeros in order to avoid treating as octal in old browsers.
+                                    code = +str.substr(1).replace(regexLeadingZeros, '');
+                                }
+
+                                if (!isNaN(code)) {
+                                    entity = String.fromCharCode(code);
+                                }
+
+                            } else {
+                                entity = XHTMLEntities[str];
+                            }
+                        }
+                        
+                        if (entity) {
+                            result += entity;
+                        } else {
+                            result += '&';
+                            index = savedIndex;
+                        }
                     } else {
                         result += ch;
                     }
-                    index++;
                 }
                 return result;
             }
