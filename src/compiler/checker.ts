@@ -9707,6 +9707,10 @@ module ts {
                 case SyntaxKind.ClassDeclaration:
                 case SyntaxKind.EnumDeclaration:
                 case SyntaxKind.EnumMember:
+                case SyntaxKind.JSXElement:
+                case SyntaxKind.JSXOpeningElement:
+                case SyntaxKind.JSXAttribute:
+                case SyntaxKind.JSXExpression:
                 case SyntaxKind.SourceFile:
                     forEachChild(node, checkFunctionExpressionBodies);
                     break;
