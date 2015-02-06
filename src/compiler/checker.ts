@@ -6005,7 +6005,7 @@ module ts {
             return getSignatureInstantiation(signature, getInferredTypes(context));
         }
 
-        function inferTypeArguments(signature: Signature, args: Expression[], excludeArgument?: boolean[]): InferenceContext {
+        function inferTypeArguments(signature: Signature, args: Expression[], excludeArgument?: boolean[], isJSXElement = false): InferenceContext {
             var typeParameters = signature.typeParameters;
             var context = createInferenceContext(typeParameters, /*inferUnionTypes*/ false);
             var mapper = createInferenceMapper(context);
@@ -6020,6 +6020,10 @@ module ts {
                     if (i === 0 && args[i].parent.kind === SyntaxKind.TaggedTemplateExpression) {
                         inferTypes(context, globalTemplateStringsArrayType, parameterType);
                         continue;
+                    }
+                    
+                    if (i > 0 && isJSXElement) {
+                        break;
                     }
 
                     inferTypes(context, checkExpressionWithContextualType(args[i], parameterType, mapper), parameterType);
@@ -6036,6 +6040,10 @@ module ts {
                     if (excludeArgument[i] === false) {
                         var parameterType = getTypeAtPosition(signature, i);
                         inferTypes(context, checkExpressionWithContextualType(args[i], parameterType, mapper), parameterType);
+                    }
+                    
+                    if (i > 0 && isJSXElement) {
+                        break;
                     }
                 }
             }
@@ -6319,7 +6327,7 @@ module ts {
                                 typeArgumentsAreValid = checkTypeArguments(candidate, typeArguments, typeArgumentTypes, /*reportErrors*/ false)
                             }
                             else {
-                                inferenceResult = inferTypeArguments(candidate, args, excludeArgument);
+                                inferenceResult = inferTypeArguments(candidate, args, excludeArgument, isJSXElement);
                                 typeArgumentsAreValid = inferenceResult.failedTypeParameterIndex < 0;
                                 typeArgumentTypes = inferenceResult.inferredTypes;
                             }
