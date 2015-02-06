@@ -12027,7 +12027,8 @@ var ts;
             });
             return getSignatureInstantiation(signature, getInferredTypes(context));
         }
-        function inferTypeArguments(signature, args, excludeArgument) {
+        function inferTypeArguments(signature, args, excludeArgument, isJSXElement) {
+            if (isJSXElement === void 0) { isJSXElement = false; }
             var typeParameters = signature.typeParameters;
             var context = createInferenceContext(typeParameters, false);
             var mapper = createInferenceMapper(context);
@@ -12041,6 +12042,9 @@ var ts;
                         inferTypes(context, globalTemplateStringsArrayType, parameterType);
                         continue;
                     }
+                    if (i > 0 && isJSXElement) {
+                        break;
+                    }
                     inferTypes(context, checkExpressionWithContextualType(args[i], parameterType, mapper), parameterType);
                 }
             }
@@ -12052,6 +12056,9 @@ var ts;
                     if (excludeArgument[i] === false) {
                         var parameterType = getTypeAtPosition(signature, i);
                         inferTypes(context, checkExpressionWithContextualType(args[i], parameterType, mapper), parameterType);
+                    }
+                    if (i > 0 && isJSXElement) {
+                        break;
                     }
                 }
             }
@@ -12192,6 +12199,9 @@ var ts;
                 error(node, ts.Diagnostics.Supplied_parameters_do_not_match_any_signature_of_call_target);
             }
             if (!produceDiagnostics) {
+                if (isJSXElement && candidateForArgumentError) {
+                    return candidateForArgumentError;
+                }
                 for (var i = 0, n = candidates.length; i < n; i++) {
                     if (hasCorrectArity(node, args, candidates[i])) {
                         return candidates[i];
@@ -12216,7 +12226,7 @@ var ts;
                                 typeArgumentsAreValid = checkTypeArguments(candidate, typeArguments, typeArgumentTypes, false);
                             }
                             else {
-                                inferenceResult = inferTypeArguments(candidate, args, excludeArgument);
+                                inferenceResult = inferTypeArguments(candidate, args, excludeArgument, isJSXElement);
                                 typeArgumentsAreValid = inferenceResult.failedTypeParameterIndex < 0;
                                 typeArgumentTypes = inferenceResult.inferredTypes;
                             }

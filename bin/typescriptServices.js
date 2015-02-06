@@ -12645,7 +12645,8 @@ var ts;
             });
             return getSignatureInstantiation(signature, getInferredTypes(context));
         }
-        function inferTypeArguments(signature, args, excludeArgument) {
+        function inferTypeArguments(signature, args, excludeArgument, isJSXElement) {
+            if (isJSXElement === void 0) { isJSXElement = false; }
             var typeParameters = signature.typeParameters;
             var context = createInferenceContext(typeParameters, false);
             var mapper = createInferenceMapper(context);
@@ -12659,6 +12660,9 @@ var ts;
                         inferTypes(context, globalTemplateStringsArrayType, parameterType);
                         continue;
                     }
+                    if (i > 0 && isJSXElement) {
+                        break;
+                    }
                     inferTypes(context, checkExpressionWithContextualType(args[i], parameterType, mapper), parameterType);
                 }
             }
@@ -12670,6 +12674,9 @@ var ts;
                     if (excludeArgument[i] === false) {
                         var parameterType = getTypeAtPosition(signature, i);
                         inferTypes(context, checkExpressionWithContextualType(args[i], parameterType, mapper), parameterType);
+                    }
+                    if (i > 0 && isJSXElement) {
+                        break;
                     }
                 }
             }
@@ -12810,6 +12817,9 @@ var ts;
                 error(node, ts.Diagnostics.Supplied_parameters_do_not_match_any_signature_of_call_target);
             }
             if (!produceDiagnostics) {
+                if (isJSXElement && candidateForArgumentError) {
+                    return candidateForArgumentError;
+                }
                 for (var i = 0, n = candidates.length; i < n; i++) {
                     if (hasCorrectArity(node, args, candidates[i])) {
                         return candidates[i];
@@ -12834,7 +12844,7 @@ var ts;
                                 typeArgumentsAreValid = checkTypeArguments(candidate, typeArguments, typeArgumentTypes, false);
                             }
                             else {
-                                inferenceResult = inferTypeArguments(candidate, args, excludeArgument);
+                                inferenceResult = inferTypeArguments(candidate, args, excludeArgument, isJSXElement);
                                 typeArgumentsAreValid = inferenceResult.failedTypeParameterIndex < 0;
                                 typeArgumentTypes = inferenceResult.inferredTypes;
                             }
@@ -26112,12 +26122,15 @@ var ts;
                     var parent = previousToken.parent;
                     switch (previousToken.kind) {
                         case 66 /* Identifier */:
-                            while (parent && parent.kind === 123 /* QualifiedName */ || parent.kind === 203 /* JSXTag */) {
+                            while (parent && (parent.kind === 123 /* QualifiedName */ || parent.kind === 205 /* JSXAttribute */ || parent.kind === 203 /* JSXTag */)) {
                                 parent = parent.parent;
                             }
                             break;
-                        case 8 /* StringLiteral */:
                         case 16 /* CloseBraceToken */:
+                            if (parent && parent.kind === 206 /* JSXExpression */) {
+                                parent = parent.parent;
+                            }
+                        case 8 /* StringLiteral */:
                             if (parent && parent.kind === 205 /* JSXAttribute */) {
                                 parent = parent.parent;
                             }
