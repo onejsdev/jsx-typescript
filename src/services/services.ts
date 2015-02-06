@@ -2441,13 +2441,23 @@ module ts {
                 if (previousToken) {
                     var parent = previousToken.parent;
                     switch(previousToken.kind) {
-                        case SyntaxKind.Identifier: //<div |
-                            while (parent && parent.kind === SyntaxKind.QualifiedName || parent.kind === SyntaxKind.JSXTag) {
+                        case SyntaxKind.Identifier: //<div | && <div attr |
+                            while (parent && (
+                                parent.kind === SyntaxKind.QualifiedName || 
+                                parent.kind === SyntaxKind.JSXAttribute ||
+                                parent.kind === SyntaxKind.JSXTag
+                            )) {
                                 parent = parent.parent;
                             }
                             break;
-                        case SyntaxKind.StringLiteral: //<div attr="something" |
+                            
                         case SyntaxKind.CloseBraceToken: //<div attr={expression} |
+                            if (parent && parent.kind === SyntaxKind.JSXExpression) {
+                                parent = parent.parent
+                            }
+                            // walk through
+                        case SyntaxKind.StringLiteral: //<div attr="something" |
+                            
                             if (parent && parent.kind === SyntaxKind.JSXAttribute) {
                                 parent = parent.parent;
                             }

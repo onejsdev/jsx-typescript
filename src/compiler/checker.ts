@@ -6299,6 +6299,9 @@ module ts {
             //  declare function f(a: { xa: number; xb: number; });
             //  f({ |
             if (!produceDiagnostics) {
+                if (isJSXElement && candidateForArgumentError) {
+                    return candidateForArgumentError;
+                } 
                 for (var i = 0, n = candidates.length; i < n; i++) {
                     if (hasCorrectArity(node, args, candidates[i])) {
                         return candidates[i];
