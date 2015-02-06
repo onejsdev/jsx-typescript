@@ -51,6 +51,7 @@
         "README.md",
         "CONTRIBUTING.md",
         "ThirdPartyNoticeText.txt",
-        "CopyrightNotice.txt"
+        "CopyrightNotice.txt",
+        "typings"
     ]
 }
