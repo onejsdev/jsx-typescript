@@ -15384,6 +15384,10 @@ var ts;
                 case 193 /* ClassDeclaration */:
                 case 196 /* EnumDeclaration */:
                 case 214 /* EnumMember */:
+                case 201 /* JSXElement */:
+                case 202 /* JSXOpeningElement */:
+                case 205 /* JSXAttribute */:
+                case 206 /* JSXExpression */:
                 case 215 /* SourceFile */:
                     ts.forEachChild(node, checkFunctionExpressionBodies);
                     break;
