@@ -592,7 +592,7 @@ class TodoApp extends React.Component<{},{items?: string[]; text?: string}> {
 >h3 : unknown
 
                 <TodoList items={this.state.items} />
-><TodoList items={this.state.items} /> : React.ReactCompositeElement<{ items: any[]; }>
+><TodoList items={this.state.items} /> : React.ReactCompositeElement<{ items: string[]; }>
 ><TodoList items={this.state.items} /> : { items: any[]; }
 >TodoList : typeof TodoList
 >items : any[]
