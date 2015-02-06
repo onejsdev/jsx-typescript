@@ -16,7 +16,7 @@ npm install -g jsx-typescript
 
 The executable is named `jsx-tsc` instead of `tsc`, and has the exact same options than `tsc`: 
 
-````
+```
 jsx-tsc myFile.ts
 ```
 
