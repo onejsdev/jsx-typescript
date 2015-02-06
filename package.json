@@ -44,5 +44,13 @@
     },
     "scripts": {
         "test": "jake generate-code-coverage"
-    }
+    },
+    "files": [
+        "bin",
+        "LICENSE.txt",
+        "README.md",
+        "CONTRIBUTING.md",
+        "ThirdPartyNoticeText.txt",
+        "CopyrightNotice.txt"
+    ]
 }
