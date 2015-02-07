@@ -228,18 +228,19 @@ declare module ts {
         JSXTag = 203,
         JSXClosingElement = 204,
         JSXAttribute = 205,
-        JSXExpression = 206,
-        ExternalModuleReference = 207,
-        CaseClause = 208,
-        DefaultClause = 209,
-        HeritageClause = 210,
-        CatchClause = 211,
-        PropertyAssignment = 212,
-        ShorthandPropertyAssignment = 213,
-        EnumMember = 214,
-        SourceFile = 215,
-        SyntaxList = 216,
-        Count = 217,
+        JSXSpreadAttribute = 206,
+        JSXExpression = 207,
+        ExternalModuleReference = 208,
+        CaseClause = 209,
+        DefaultClause = 210,
+        HeritageClause = 211,
+        CatchClause = 212,
+        PropertyAssignment = 213,
+        ShorthandPropertyAssignment = 214,
+        EnumMember = 215,
+        SourceFile = 216,
+        SyntaxList = 217,
+        Count = 218,
         FirstAssignment = 54,
         LastAssignment = 65,
         FirstReservedWord = 67,
@@ -691,12 +692,15 @@ declare module ts {
     }
     interface JSXOpeningElement extends PrimaryExpression, Declaration {
         tag: JSXTag;
-        attributes: NodeArray<JSXAttribute>;
+        attributes: NodeArray<JSXAttribute | JSXSpreadAttribute>;
         isSelfClosing: boolean;
     }
-    interface JSXAttribute extends Declaration {
+    interface JSXAttribute extends Declaration, PrimaryExpression {
         name: Identifier;
         initializer?: Expression;
+    }
+    interface JSXSpreadAttribute extends PrimaryExpression {
+        expression: Expression;
     }
     interface JSXClosingElement extends Node {
         tagName: EntityName;
