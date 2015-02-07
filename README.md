@@ -34,6 +34,5 @@ experience with the React framework, but I only have tried my compiler against t
 
 ## TODO
 
-* JSXSpreadAttribute support
 * Re-enable formatting for JSX
 * In general more tests, stabilization, better error reporting, etc...
