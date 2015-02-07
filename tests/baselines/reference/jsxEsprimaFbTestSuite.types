@@ -17,6 +17,9 @@ declare var x;
 declare var a;
 >a : any
 
+declare var props;
+>props : any
+
 <a />;
 ><a /> : any
 ><a /> : {}
@@ -151,12 +154,27 @@ baz
 >div : unknown
 >x : any
 
-//spread unsupported
-//<div {...props} />;
+<div {...props} />;
+><div {...props} /> : any
+><div {...props} /> : {}
+>div : unknown
+>props : any
 
-//<div {...props} post="attribute" />;
+<div {...props} post="attribute" />;
+><div {...props} post="attribute" /> : any
+><div {...props} post="attribute" /> : { post: string; }
+>div : unknown
+>props : any
+>post : string
 
-//<div pre="leading" pre2="attribute" {...props}></div>;
+<div pre="leading" pre2="attribute" {...props}></div>;
+><div pre="leading" pre2="attribute" {...props}></div> : any
+><div pre="leading" pre2="attribute" {...props}> : { pre: string; pre2: string; }
+>div : unknown
+>pre : string
+>pre2 : string
+>props : any
+>div : unknown
 
 <a>    </a>;
 ><a>    </a> : any
@@ -164,4 +182,3 @@ baz
 >a : any
 >a : unknown
 
-//<a .../*hai*/asdf/>
