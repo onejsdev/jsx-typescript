@@ -271,6 +271,8 @@ module ts {
                 return visitNode(cbNode, (<JSXTag>node).name);
             case SyntaxKind.JSXAttribute:
                 return visitNode(cbNode, (<JSXAttribute>node).name) || visitNode(cbNode, (<JSXAttribute>node).initializer);
+            case SyntaxKind.JSXSpreadAttribute:
+                return visitNode(cbNode, (<JSXSpreadAttribute>node).expression);
             case SyntaxKind.JSXExpression:
                 return visitNode(cbNode, (<JSXExpression>node).expression);        
             case SyntaxKind.JSXClosingElement:
@@ -332,6 +334,7 @@ module ts {
             case ParsingContext.TupleElementTypes:      return Diagnostics.Type_expected;
             case ParsingContext.HeritageClauses:        return Diagnostics.Unexpected_token_expected;
             case ParsingContext.JSXAttributes:          return Diagnostics.Identifier_expected;
+            //TODO SPRead
         }
     };
 
@@ -1489,7 +1492,7 @@ module ts {
                 case ParsingContext.HeritageClauses:
                     return isHeritageClause();
                 case ParsingContext.JSXAttributes:
-                    return isIdentifier();
+                    return isIdentifier() || token === SyntaxKind.OpenBraceToken;
             }
 
             Debug.fail("Non-exhaustive case in 'isListElement'.");
@@ -3554,7 +3557,10 @@ module ts {
             return finishNode(node);
         }
         
-        function parseJSXAttribute(): JSXAttribute {
+        function parseJSXAttribute(): JSXAttribute | JSXSpreadAttribute {
+            if (token === SyntaxKind.OpenBraceToken) {
+                return parseJSXSPreadAttribute();
+            }
             var node = <JSXAttribute>createNode(SyntaxKind.JSXAttribute);
             node.name = parseIdentifier();
             if (parseOptional(SyntaxKind.EqualsToken)) {
@@ -3571,6 +3577,15 @@ module ts {
                     
                 }
             }
+            return finishNode(node);
+        }
+        
+        function parseJSXSPreadAttribute(): JSXSpreadAttribute {
+            var node = <JSXSpreadAttribute>createNode(SyntaxKind.JSXSpreadAttribute);
+            parseExpected(SyntaxKind.OpenBraceToken);
+            parseExpected(SyntaxKind.DotDotDotToken);
+            node.expression = parseExpression();
+            parseExpected(SyntaxKind.CloseBraceToken);
             return finishNode(node);
         }
         

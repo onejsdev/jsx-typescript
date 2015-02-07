@@ -2749,10 +2749,6 @@ module ts {
             function emitJSXLiteral(literal: JSXText | StringLiteralExpression, isLast: boolean, multiLine: boolean) {
                 var lines = literal.text.split(/\r\n|\n|\r/);
 
-//                if (start) {
-//                    utils.append(start, state);
-//                }
-
                 var lastNonEmptyLine = 0;
 
                 lines.forEach((line, index)  =>{
@@ -2787,9 +2783,6 @@ module ts {
                         write(JSON.stringify(trimmedLine) + (!isLastNonEmptyLine ? " + ' ' +" : ''));
 
                         if (isLastNonEmptyLine) {
-//                            if (end) {
-//                                utils.append(end, state);
-//                            }
                             if (!isLast) {
                                 write(',');
                             }
@@ -2842,17 +2835,11 @@ module ts {
 
                 var hasAttributes = attributes.length;
 
-//                var hasAtLeastOneSpreadProperty = attributesObject.some(function(attr) {
-//                return attr.type === Syntax.XJSSpreadAttribute;
-//                });
-
-//                // if we don't have any attributes, pass in null
-//                if (hasAtLeastOneSpreadProperty) {
-//                utils.append('React.__spread({', state);
-//                } else 
+                var hasAtLeastOneSpreadProperty = attributes.some(attr => attr.kind === SyntaxKind.JSXSpreadAttribute);
+                
                 
                 if (hasAttributes) {
-                    write('{');
+                    write(hasAtLeastOneSpreadProperty? 'React.__spread({' : '{')
                     if (multiLine) {
                         increaseIndent();
                         writeLine();
@@ -2860,58 +2847,68 @@ module ts {
                         write(' ');
                     }
                 } else {
+                    // if we don't have any attributes, pass in null
                     write('null');
                 }
 
-//                // keep track of if the previous attribute was a spread attribute
-//                var previousWasSpread = false;
+                // keep track of if the previous attribute was a spread attribute
+                var previousWasSpread = false;
+                var attributeEmited = false;
 
                 // write attributes
-                attributes.forEach(function(attr, index) {
+                attributes.forEach((node, index) => {
                     var isLast = index === attributes.length - 1;
 
-//                if (attr.type === Syntax.XJSSpreadAttribute) {
-//                  // Close the previous object or initial object
-//                  if (!previousWasSpread) {
-//                    utils.append('}, ', state);
-//                  }
-//
-//                  // Move to the expression start, ignoring everything except parenthesis
-//                  // and whitespace.
-//                  utils.catchup(attr.range[0], state, stripNonWhiteParen);
-//                  // Plus 1 to skip `{`.
-//                  utils.move(attr.range[0] + 1, state);
-//                  utils.catchup(attr.argument.range[0], state, stripNonWhiteParen);
-//
-//                  traverse(attr.argument, path, state);
-//
-//                  utils.catchup(attr.argument.range[1], state);
-//
-//                  // Move to the end, ignoring parenthesis and the closing `}`
-//                  utils.catchup(attr.range[1] - 1, state, stripNonWhiteParen);
-//
-//                  if (!isLast) {
-//                    utils.append(', ', state);
-//                  }
-//
-//                  utils.move(attr.range[1], state);
-//
-//                  previousWasSpread = true;
-//
-//                  return;
-//                }
+                    if (node.kind === SyntaxKind.JSXSpreadAttribute) {
+                        // Close the previous object or initial object
+                        if (!previousWasSpread) {
+                            if (multiLine) {
+                                decreaseIndent();
+                                writeLine();
+                            }
+                            write('},');
+                            if (multiLine) {
+                                writeLine();
+                            } else  {
+                                write(' ');
+                            }
+                        }
 
-//                    // If the next attribute is a spread, we're effective last in this object
-//                    if (!isLast) {
-//                        isLast = attributesObject[index + 1].type === Syntax.XJSSpreadAttribute;
-//                    }
+                        emitNode((<JSXSpreadAttribute>node).expression);
 
+                        if (!isLast) {
+                            write(',');
+                        }
+                        
+                        if (multiLine) {
+                            writeLine();
+                        } else  {
+                            write(' ');
+                        }
+
+                        previousWasSpread = true;
+
+                        return;
+                    }
+
+                    // If the next attribute is a spread, we're effective last in this object
+                    if (!isLast) {
+                        isLast = attributes[index + 1].kind === SyntaxKind.JSXSpreadAttribute;
+                    }
+
+                    var attr = <JSXAttribute>node;
                     var name = attr.name.text;
 
 
-//                 if (previousWasSpread) {
-//                      utils.append('{', state);
-//                 }
+                    if (previousWasSpread) {
+                        write('{');
+                        if (multiLine) {
+                            increaseIndent();
+                            writeLine();
+                        } else {
+                            write(' ')
+                        }
+                    }
 
                     write(quoteAttrName(name));
                     write(': ');
@@ -2944,12 +2941,12 @@ module ts {
                     }
 
 
-//                  previousWasSpread = false;
+                    previousWasSpread = false;
 
                 });
 
 
-                if (hasAttributes /*&& !previousWasSpread*/) {
+                if (hasAttributes && !previousWasSpread) {
                     if (multiLine) {
                         decreaseIndent();
                         writeLine();
@@ -2958,9 +2955,9 @@ module ts {
                 }
                 
 
-//              if (hasAtLeastOneSpreadProperty) {
-//                  utils.append(')', state);
-//              }
+                if (hasAtLeastOneSpreadProperty) {
+                    write(')');
+                }
 
                 // filter out whitespace
                 var childrenToRender = (

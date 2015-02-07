@@ -5,6 +5,8 @@ declare var React: {
 class NotAString {
 }
 
+declare var alert: any;
+
 <div attribute1="hello" attribute2 > hello </div>;
 
 <div attribute1="hello" attribute2={true}> hello </div>;
@@ -26,4 +28,22 @@ class NotAString {
 
 <div attribute2> hello </div>;
 
-<div attribute1="hello" attribute2 />
+<div attribute1="hello" attribute2 />;
+
+<div {...{attribute1: 'hello', attribute2: true}}> hello </div>; 
+
+<div {...{attribute1: 3}} > hello </div>;
+
+<div {...(() =>({attribute1: 'hello', attribute2: true}))()}> hello </div>;
+
+<div {...(alert('hello'), {attribute1: 'hello', attribute2: true})}  > hello </div>;
+
+<div {...(alert('hello'), {attribute1: 3})}> hello </div>;
+    
+<div attribute1={3} {...{attribute1: 'hello', attribute2: true}}> hello </div>; 
+
+<div  {...{attribute1: 'hello', attribute2: true}} attribute1={3} > hello </div>; 
+
+<div  {...{attribute1: 'hello', attribute2: 3}} attribute2 > hello </div>; 
+
+<div  {...{attribute1: 'hello', attribute2: 3}} attribute2 {...{ attribute2: 'hello' }} > hello </div>; 

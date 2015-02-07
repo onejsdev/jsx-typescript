@@ -3362,7 +3362,7 @@ module ts {
 
         // Returns true if the given expression contains (at any level of nesting) a function or arrow expression
         // that is subject to contextual typing.
-        function isContextSensitive(node: Expression | MethodDeclaration | ObjectLiteralElement | JSXAttribute | JSXOpeningElement): boolean {
+        function isContextSensitive(node: Expression | MethodDeclaration | ObjectLiteralElement | JSXAttribute | JSXSpreadAttribute | JSXOpeningElement): boolean {
             Debug.assert(node.kind !== SyntaxKind.MethodDeclaration || isObjectLiteralMethod(node));
             switch (node.kind) {
                 case SyntaxKind.FunctionExpression:
@@ -3391,6 +3391,8 @@ module ts {
                     return forEach((<JSXOpeningElement>node).attributes, isContextSensitive);
                 case SyntaxKind.JSXAttribute:
                     return !!(<JSXAttribute>node).initializer && isContextSensitive((<JSXAttribute>node).initializer);
+                case SyntaxKind.JSXSpreadAttribute:
+                    return isContextSensitive((<JSXSpreadAttribute>node).expression);
                 case SyntaxKind.JSXExpression:
                     return !!(<JSXExpression>node).expression && isContextSensitive((<JSXExpression>node).expression);
             }
@@ -4624,6 +4626,7 @@ module ts {
                     case SyntaxKind.CatchClause:
                     case SyntaxKind.JSXElement:
                     case SyntaxKind.JSXAttribute:
+                    case SyntaxKind.JSXSpreadAttribute:
                     case SyntaxKind.JSXOpeningElement:
                     case SyntaxKind.JSXExpression:
                         return forEachChild(node, isAssignedIn);
@@ -5639,23 +5642,37 @@ module ts {
 
             for (var i = 0; i < node.attributes.length; i++) {
                 var memberDecl = node.attributes[i];
-                var member = memberDecl.symbol;
-                var type = memberDecl.initializer ? checkExpression(memberDecl.initializer) : booleanType;
-                typeFlags |= type.flags;
-                var prop = <TransientSymbol>createSymbol(SymbolFlags.Property | SymbolFlags.Transient | member.flags, member.name);
-                prop.declarations = member.declarations;
-                prop.parent = member.parent;
-                if (member.valueDeclaration) {
-                    prop.valueDeclaration = member.valueDeclaration;
+                
+                if (memberDecl.kind === SyntaxKind.JSXAttribute) {
+                    var attr = <JSXAttribute>memberDecl;
+                    var member = attr.symbol;
+                    var type = attr.initializer ? checkExpression(attr.initializer) : booleanType;
+                    typeFlags |= type.flags;
+                    var prop = <TransientSymbol>createSymbol(SymbolFlags.Property | SymbolFlags.Transient | member.flags, member.name);
+                    prop.declarations = member.declarations;
+                    prop.parent = member.parent;
+                    if (member.valueDeclaration) {
+                        prop.valueDeclaration = member.valueDeclaration;
+                    }
+
+                    prop.type = type;
+                    prop.target = member;
+                    member = prop;
+
+
+                    propertiesTable[member.name] = member;
+                } else {
+                    var type = checkExpression((<JSXSpreadAttribute>memberDecl).expression);
+                    var properties = getPropertiesOfObjectType(type);
+                    for (var j = 0; j < properties.length; j++) {
+                        var prop = <TransientSymbol>properties[j];
+                        typeFlags |= prop.type.flags;
+                        propertiesTable[prop.name] = prop;
+                    }
                 }
-
-                prop.type = type;
-                prop.target = member;
-                member = prop;
-               
-
-                propertiesTable[member.name] = member;
             }
+            
+            
 
             var result = createAnonymousType(node.symbol, propertiesTable, emptyArray, emptyArray, undefined, undefined);
             result.flags |= TypeFlags.ObjectLiteral | TypeFlags.ContainsObjectLiteral | (typeFlags & TypeFlags.ContainsUndefinedOrNull);
@@ -9721,6 +9738,7 @@ module ts {
                 case SyntaxKind.JSXElement:
                 case SyntaxKind.JSXOpeningElement:
                 case SyntaxKind.JSXAttribute:
+                case SyntaxKind.JSXSpreadAttribute:
                 case SyntaxKind.JSXExpression:
                 case SyntaxKind.SourceFile:
                     forEachChild(node, checkFunctionExpressionBodies);
@@ -10921,9 +10939,12 @@ module ts {
 
             var attributes = node.openingElement.attributes;
             for (var i = 0, n = node.openingElement.attributes.length; i < n; i++) {
-                var attr = attributes[i];
-                var name = attr.name;
+                if (attributes[i].kind === SyntaxKind.JSXSpreadAttribute) {
+                    continue;
+                }
                 
+                var attr = <JSXAttribute>attributes[i];
+                var name = attr.name;
                
 
                 if (!hasProperty(seen, (<Identifier>name).text)) {

@@ -240,6 +240,7 @@ module ts {
         JSXTag,
         JSXClosingElement,
         JSXAttribute,
+        JSXSpreadAttribute,
         JSXExpression,
 
         // Module references
@@ -891,16 +892,18 @@ module ts {
     
     export interface JSXOpeningElement extends PrimaryExpression, Declaration {
         tag: JSXTag;
-        attributes: NodeArray<JSXAttribute>;
+        attributes: NodeArray<JSXAttribute | JSXSpreadAttribute>;
         isSelfClosing: boolean;
     }
     
-    export interface JSXAttribute extends Declaration {
+    export interface JSXAttribute extends Declaration, PrimaryExpression {
         name: Identifier;
         initializer?: Expression;
     }
     
-    //TODO Sprea attribute
+    export interface JSXSpreadAttribute extends PrimaryExpression {
+        expression: Expression;
+    }
   
     export interface JSXClosingElement extends Node {
         tagName: EntityName;

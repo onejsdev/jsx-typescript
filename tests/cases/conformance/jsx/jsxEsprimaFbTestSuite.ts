@@ -4,6 +4,7 @@ declare var AbC_def;
 declare var LeftRight;
 declare var x;
 declare var a;
+declare var props;
 
 <a />;
 
@@ -43,13 +44,10 @@ baz
 
 (<div />) < x;
 
-//spread unsupported
-//<div {...props} />;
+<div {...props} />;
 
-//<div {...props} post="attribute" />;
+<div {...props} post="attribute" />;
 
-//<div pre="leading" pre2="attribute" {...props}></div>;
+<div pre="leading" pre2="attribute" {...props}></div>;
 
 <a>    </a>;
-
-//<a .../*hai*/asdf/>

@@ -517,6 +517,7 @@ module ts {
             case SyntaxKind.JSXOpeningElement:
             case SyntaxKind.JSXTag:
             case SyntaxKind.JSXExpression:
+            case SyntaxKind.JSXSpreadAttribute:
                 return true;
             case SyntaxKind.QualifiedName:
                 while (node.parent.kind === SyntaxKind.QualifiedName) {

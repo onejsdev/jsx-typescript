@@ -2345,7 +2345,11 @@ module ts {
                     var contextualTypeMembers = typeInfoResolver.getPropertiesOfType(contextualType);
                     if (contextualTypeMembers && contextualTypeMembers.length > 0) {
                         // Add filtered items to the completion list
-                        var filteredMembers = filterContextualMembersList(contextualTypeMembers, containingJSXOpeningElement.attributes);
+                        var nonSpreadAttributes: JSXAttribute[] = <JSXAttribute[]>containingJSXOpeningElement.attributes.filter(
+                            attr => attr.kind === SyntaxKind.JSXAttribute
+                        );
+                        
+                        var filteredMembers = filterContextualMembersList(contextualTypeMembers, nonSpreadAttributes);
                         getCompletionEntriesFromSymbols(filteredMembers, activeCompletionSession);
                     }
                 }

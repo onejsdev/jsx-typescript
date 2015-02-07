@@ -2,10 +2,13 @@ declare var React: any;
 declare var Component:any;
 declare var Composite:any;
 declare var Composite2:any;
+declare var Child:any;
 declare var Namespace:any;
 declare var foo: any;
 declare var bar: any;
 declare var y:any;
+declare var x:any;
+declare var z:any;
 declare var hasOwnProperty:any;
 
 <div>text</div>;
@@ -91,33 +94,13 @@ var x =
 
 <Namespace.DeepNamespace.Component />;
 
+<Component { ... x } y
+={2 } z />;
 
-/* Need Spread Attribute
- *   
-  it('wraps props in React.__spread for spread attributes', function() {
-    var code =
-      '<Component { ... x } y\n' +
-      '={2 } z />';
-    var result =
-      'React.createElement(Component, React.__spread({},    x , {y: \n' +
-      '2, z: true}))';
 
-    expect(transform(code).code).toBe(result);
-  });
+<Component
+    {...this.props} sound="moo" />;
 
-  it('adds appropriate newlines when using spread attribute', function() {
-    var code =
-      '<Component\n' +
-      '  {...this.props}\n' +
-      '  sound="moo" />';
-    var result =
-      'React.createElement(Component, React.__spread({}, \n' +
-      '  this.props, \n' +
-      '  {sound: "moo"}))';
-
-    expect(transform(code).code).toBe(result);
-  });
-  */
 
 <font-face />;
 
@@ -125,42 +108,17 @@ var x =
 
 <x-component />;
 
+<Component {...x} />;
 
-/* Need Spread Attribute
- * 
-  it('calls assign with a new target object for spreads', function() {
-    expectObjectAssign(
-      '<Component {...x} />'
-    ).toBeCalledWith({}, x);
-  });
-  
-  it('calls assign with an empty object when the spread is first', function() {
-    expectObjectAssign(
-      '<Component { ...x } y={2} />'
-    ).toBeCalledWith({}, x, { y: 2 });
-  });
+<Component { ...x } y={2} />;
 
-  it('coalesces consecutive properties into a single object', function() {
-    expectObjectAssign(
-      '<Component { ... x } y={2} z />'
-    ).toBeCalledWith({}, x, { y: 2, z: true });
-  });
+<Component { ... x } y={2} z />;
 
-  it('avoids an unnecessary empty object when spread is not first', function() {
-    expectObjectAssign(
-      '<Component x={1} {...y} />'
-    ).toBeCalledWith({x: 1}, y);
-  });
+<Component x={1} {...y} />;
 
-  it('passes the same value multiple times to React.__spread', function() {
-    expectObjectAssign(
-      '<Component x={1} y="2" {...z} {...z}><Child /></Component>'
-    ).toBeCalledWith({x: 1, y: "2"}, z, z);
-  });
 
-  it('evaluates sequences before passing them to React.__spread', function() {
-    expectObjectAssign(
-      '<Component x="1" {...(z = { y: 2 }, z)} z={3}>Text</Component>'
-    ).toBeCalledWith({x: "1"}, { y: 2 }, {z: 3});
-  });
- */
+<Component x={1} y="2" {...z} {...z}><Child /></Component>;
+
+<Component x="1" {...(z = { y: 2 }, z)} z={3}>Text</Component>;
+
+

@@ -25,5 +25,12 @@ var x = <div>one</div> /* intervening comment */ <div>two</div>;;
 <div {props} />;
 
 
-//<div>stuff</div {...props}>;
-//<div {...props}>stuff</div {...props}>;
+<div>stuff</div {...props}>;
+<div {...props}>stuff</div {...props}>;
+
+<a>></a>;
+<a> ></a>;
+<a b=}>;
+<a b=<}>;
+<a>}</a>;
+<a .../*hai*/asdf/>;
