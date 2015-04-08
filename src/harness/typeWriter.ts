@@ -38,6 +38,8 @@ class TypeWriterWalker {
             case ts.SyntaxKind.SuperKeyword:
             case ts.SyntaxKind.ArrayLiteralExpression:
             case ts.SyntaxKind.ObjectLiteralExpression:
+            case ts.SyntaxKind.JSXElement:
+            case ts.SyntaxKind.JSXOpeningElement:
             case ts.SyntaxKind.ElementAccessExpression:
             case ts.SyntaxKind.CallExpression:
             case ts.SyntaxKind.NewExpression:
