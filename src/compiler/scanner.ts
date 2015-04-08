@@ -23,6 +23,8 @@ module ts {
         reScanSlashToken(): SyntaxKind;
         reScanTemplateToken(): SyntaxKind;
         scan(): SyntaxKind;
+        setInJSXChild(inJSXChild: boolean): void;
+        setInJSXTag(inJSXTag: boolean): void;
         setText(text: string): void;
         setTextPos(textPos: number): void;
         // Invokes the provided callback then unconditionally restores the scanner to the state it 
@@ -125,6 +127,7 @@ module ts {
         "++": SyntaxKind.PlusPlusToken,
         "--": SyntaxKind.MinusMinusToken,
         "<<": SyntaxKind.LessThanLessThanToken,
+        "</": SyntaxKind.LessThanSlashToken,
         ">>": SyntaxKind.GreaterThanGreaterThanToken,
         ">>>": SyntaxKind.GreaterThanGreaterThanGreaterThanToken,
         "&": SyntaxKind.AmpersandToken,
@@ -597,6 +600,8 @@ module ts {
         let precedingLineBreak: boolean;
         let hasExtendedUnicodeEscape: boolean;
         let tokenIsUnterminated: boolean;
+        let inJSXChild: boolean;
+        let inJSXTag: boolean;
 
         function error(message: DiagnosticMessage, length?: number): void {
             if (onError) {
@@ -605,12 +610,23 @@ module ts {
         }
 
         function isIdentifierStart(ch: number): boolean {
+            if (inJSXTag && ch === CharacterCodes.backslash) {
+                return false;
+            }
             return ch >= CharacterCodes.A && ch <= CharacterCodes.Z || ch >= CharacterCodes.a && ch <= CharacterCodes.z ||
                 ch === CharacterCodes.$ || ch === CharacterCodes._ ||
                 ch > CharacterCodes.maxAsciiCharacter && isUnicodeIdentifierStart(ch, languageVersion);
         }
 
         function isIdentifierPart(ch: number): boolean {
+            if (inJSXTag) {
+                if (ch === CharacterCodes.backslash) {
+                    return false;
+                } 
+                else if (ch === CharacterCodes.minus) {
+                    return true;
+                }
+            }
             return ch >= CharacterCodes.A && ch <= CharacterCodes.Z || ch >= CharacterCodes.a && ch <= CharacterCodes.z ||
                 ch >= CharacterCodes._0 && ch <= CharacterCodes._9 || ch === CharacterCodes.$ || ch === CharacterCodes._ ||
                 ch > CharacterCodes.maxAsciiCharacter && isUnicodeIdentifierPart(ch, languageVersion);
@@ -716,6 +732,25 @@ module ts {
                     result += text.substring(start, pos);
                     tokenIsUnterminated = true;
                     error(Diagnostics.Unterminated_string_literal);
+                    break;
+                }
+                pos++;
+            }
+            return result;
+        }
+
+        function scanJSXText() {
+            let result = "";
+            let start = pos;
+            while (true) {
+                if (pos >= len) {
+                    result += text.substring(start, pos);
+                    error(Diagnostics.Unexpected_end_of_text);
+                    break;
+                }
+                let ch = text.charCodeAt(pos);
+                if (ch === CharacterCodes.lessThan || ch === CharacterCodes.openBrace || ch === CharacterCodes.closeBrace) {
+                    result += text.substring(start, pos);
                     break;
                 }
                 pos++;
@@ -932,7 +967,7 @@ module ts {
                 if (isIdentifierPart(ch)) {
                     pos++;
                 }
-                else if (ch === CharacterCodes.backslash) {
+                else if (!inJSXTag && ch === CharacterCodes.backslash) {
                     ch = peekUnicodeEscape();
                     if (!(ch >= 0 && isIdentifierPart(ch))) {
                         break;
@@ -998,6 +1033,25 @@ module ts {
                     return token = SyntaxKind.EndOfFileToken;
                 }
                 let ch = text.charCodeAt(pos);
+
+                if (inJSXChild) {
+                    switch (ch) {
+                        case CharacterCodes.closeBrace:
+                            return pos++, token = SyntaxKind.CloseBraceToken;
+                        case CharacterCodes.openBrace:
+                            return pos++, token = SyntaxKind.OpenBraceToken;
+                        case CharacterCodes.lessThan:
+                            if (text.charCodeAt(pos + 1) === CharacterCodes.slash) {
+                                return pos += 2, token = SyntaxKind.LessThanSlashToken;
+                            }
+                            return pos++, token = SyntaxKind.LessThanToken;
+                        default:
+                            tokenValue = scanJSXText();
+                            return token = SyntaxKind.JSXText;
+                    }
+                }
+
+
                 switch (ch) {
                     case CharacterCodes.lineFeed:
                     case CharacterCodes.carriageReturn:
@@ -1289,7 +1343,7 @@ module ts {
                         return pos++, token = SyntaxKind.AtToken;
                     case CharacterCodes.backslash:
                         let cookedChar = peekUnicodeEscape();
-                        if (cookedChar >= 0 && isIdentifierStart(cookedChar)) {
+                        if (!inJSXTag && cookedChar >= 0 && isIdentifierStart(cookedChar)) {
                             pos += 6;
                             tokenValue = String.fromCharCode(cookedChar) + scanIdentifierParts();
                             return token = getIdentifierToken();
@@ -1301,7 +1355,7 @@ module ts {
                             pos++;
                             while (pos < len && isIdentifierPart(ch = text.charCodeAt(pos))) pos++;
                             tokenValue = text.substring(tokenPos, pos);
-                            if (ch === CharacterCodes.backslash) {
+                            if (!inJSXTag && ch === CharacterCodes.backslash) {
                                 tokenValue += scanIdentifierParts();
                             }
                             return token = getIdentifierToken();
@@ -1464,6 +1518,8 @@ module ts {
             isIdentifier: () => token === SyntaxKind.Identifier || token > SyntaxKind.LastReservedWord,
             isReservedWord: () => token >= SyntaxKind.FirstReservedWord && token <= SyntaxKind.LastReservedWord,
             isUnterminated: () => tokenIsUnterminated,
+            setInJSXChild: (val) => inJSXChild = val,
+            setInJSXTag:(val) => inJSXTag = val,
             reScanGreaterToken,
             reScanSlashToken,
             reScanTemplateToken,
