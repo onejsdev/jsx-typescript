@@ -753,7 +753,7 @@ var __param = this.__param || function(index, decorator) { return function (targ
                 }
             }
 
-            function emitLinePreservingList(parent: Node, nodes: NodeArray<Node>, allowTrailingComma: boolean, spacesBetweenBraces: boolean) {
+            function emitLinePreservingList(parent: Node, nodes: NodeArray<Node>, allowTrailingComma: boolean, spacesBetweenBraces: boolean, emitComa = true) {
                 Debug.assert(nodes.length > 0);
 
                 increaseIndent();
@@ -770,10 +770,16 @@ var __param = this.__param || function(index, decorator) { return function (targ
                 for (let i = 0, n = nodes.length; i < n; i++) {
                     if (i) {
                         if (nodeEndIsOnSameLineAsNodeStart(nodes[i - 1], nodes[i])) {
-                            write(", ");
+                            if (emitComa) {
+                                write(", ");
+                            } else {
+                                write(" ");
+                            }
                         }
                         else {
-                            write(",");
+                            if (emitComa) {
+                                write(",");
+                            }
                             writeLine();
                         }
                     }
@@ -781,7 +787,7 @@ var __param = this.__param || function(index, decorator) { return function (targ
                     emit(nodes[i]);
                 }
 
-                if (nodes.hasTrailingComma && allowTrailingComma) {
+                if (emitComa && nodes.hasTrailingComma && allowTrailingComma) {
                     write(",");
                 }
 
@@ -874,6 +880,10 @@ var __param = this.__param || function(index, decorator) { return function (targ
             }
 
             function getLiteralText(node: LiteralExpression) {
+                if (node.kind ===  SyntaxKind.JSXText) {
+                    return node.text;
+                }
+
                 // Any template literal or string literal with an extended escape
                 // (e.g. "\u{0067}") will need to be downleveled as a escaped string literal.
                 if (languageVersion < ScriptTarget.ES6 && (isTemplateLiteralKind(node.kind) || node.hasExtendedUnicodeEscape)) {
@@ -1619,6 +1629,61 @@ var __param = this.__param || function(index, decorator) { return function (targ
                     emitLinePreservingList(node, properties, /*allowTrailingComma:*/ languageVersion >= ScriptTarget.ES5, /*spacesBetweenBraces:*/ true)
                 }
 
+                write("}");
+            }
+
+            function emitJSXElement(node: JSXElement) {
+                emit(node.openingElement);
+                if (node.children.length) {
+                    for (let child of node.children) {
+                        emit(child);
+                    }
+                }
+                if (node.closingElement) {
+                    emit(node.closingElement);
+                }
+            }
+
+            function emitJSXOpeningElement(node: JSXOpeningElement) {
+                write("<");
+                emit(node.tag.name);
+
+                if (node.attributes.length) {
+                    emitLinePreservingList(node, node.attributes, /*allowGeneratedIdentifiers*/ false, /*spacesBetweenBraces*/ true, /*emitComa*/ false);
+                }
+
+                if (node.isSelfClosing) {
+                    write("/>");
+                } else {
+                    write(">");
+                }
+            }
+
+            function emitJSXClosingElement(node: JSXClosingElement) {
+                write("</");
+                emit(node.tagName);
+                write(">");
+            }
+
+            function emitJSXAttribute(node: JSXAttribute) {
+                emit(node.name);
+                if (node.initializer) {
+                    write("=");
+                    emit(node.initializer);
+                }
+            }
+
+            function emitJSXSpreadAttribute(node: JSXSpreadAttribute) {
+                write("{...");
+                emit(node.expression);
+                write("}");
+            }
+
+            function emitJSXExpression(node: JSXExpression) {
+                write("{");
+                if (node.expression) {
+                    emit(node.expression);
+                }
                 write("}");
             }
 
@@ -4893,6 +4958,7 @@ var __param = this.__param || function(index, decorator) { return function (targ
                     case SyntaxKind.TemplateHead:
                     case SyntaxKind.TemplateMiddle:
                     case SyntaxKind.TemplateTail:
+                    case SyntaxKind.JSXText:
                         return emitLiteral(<LiteralExpression>node);
                     case SyntaxKind.TemplateExpression:
                         return emitTemplateExpression(<TemplateExpression>node);
@@ -5016,6 +5082,18 @@ var __param = this.__param || function(index, decorator) { return function (targ
                         return emitExportDeclaration(<ExportDeclaration>node);
                     case SyntaxKind.ExportAssignment:
                         return emitExportAssignment(<ExportAssignment>node);
+                    case SyntaxKind.JSXElement:
+                        return emitJSXElement(<JSXElement>node);
+                    case SyntaxKind.JSXOpeningElement:
+                        return emitJSXOpeningElement(<JSXOpeningElement>node);
+                    case SyntaxKind.JSXClosingElement:
+                        return emitJSXClosingElement(<JSXClosingElement>node);
+                    case SyntaxKind.JSXAttribute:
+                        return emitJSXAttribute(<JSXAttribute>node);
+                    case SyntaxKind.JSXSpreadAttribute:
+                        return emitJSXSpreadAttribute(<JSXSpreadAttribute>node);
+                    case SyntaxKind.JSXExpression:
+                        return emitJSXExpression(<JSXExpression>node);
                     case SyntaxKind.SourceFile:
                         return emitSourceFileNode(<SourceFile>node);
                 }
