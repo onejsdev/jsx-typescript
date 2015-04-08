@@ -1,0 +1,657 @@
+=== tests/cases/compiler/jsxReactApp.ts ===
+/// <JSX factory="React.createElement" />
+
+declare module React {
+>React : typeof React
+    
+    
+    interface ComponentClass<P> { 
+>ComponentClass : ComponentClass<P>
+>P : P
+
+        new(props: any): Component<any, any>; 
+>props : any
+>Component : Component<P, S>
+
+        prototype: { props: P };
+>prototype : { props: P; }
+>props : P
+>P : P
+    }
+        
+
+    interface ReactCompositeElement<P extends ReactAttributes> {
+>ReactCompositeElement : ReactCompositeElement<P>
+>P : P
+>ReactAttributes : ReactAttributes
+
+        type: ComponentClass<P>;
+>type : ComponentClass<P>
+>ComponentClass : ComponentClass<P>
+>P : P
+
+        props?: P;
+>props : P
+>P : P
+
+        key?: number | string;
+>key : string | number
+
+        ref?: string;
+>ref : string
+    }
+    
+    interface ReactHtmlElement {
+>ReactHtmlElement : ReactHtmlElement
+
+        type: string;
+>type : string
+
+        props?: ReactAttributes;
+>props : ReactAttributes
+>ReactAttributes : ReactAttributes
+
+        key?: number | string;
+>key : string | number
+
+        ref?: string;
+>ref : string
+    }
+    
+    type ReactElement = ReactCompositeElement<any> | ReactHtmlElement;
+>ReactElement : ReactHtmlElement | ReactCompositeElement<any>
+>ReactCompositeElement : ReactCompositeElement<P>
+>ReactHtmlElement : ReactHtmlElement
+    
+    interface ReactElementArray extends Array<string | ReactElement | ReactElementArray> {
+>ReactElementArray : ReactElementArray
+>Array : T[]
+>ReactElement : ReactHtmlElement | ReactCompositeElement<any>
+>ReactElementArray : ReactElementArray
+    
+    }
+    
+    class Component<P extends ReactAttributes, S> {
+>Component : Component<P, S>
+>P : P
+>ReactAttributes : ReactAttributes
+>S : S
+
+        constructor(props: P, childen?: any[]);
+>props : P
+>P : P
+>childen : any[]
+
+        props: P;
+>props : P
+>P : P
+
+        state: S;
+>state : S
+>S : S
+
+        setState(state: S, callback?: () => void): void
+>setState : (state: S, callback?: () => void) => void
+>state : S
+>S : S
+>callback : () => void
+
+        render(): ReactElement;
+>render : () => ReactHtmlElement | ReactCompositeElement<any>
+>ReactElement : ReactHtmlElement | ReactCompositeElement<any>
+    }
+    
+    interface ReactAttributes {
+>ReactAttributes : ReactAttributes
+
+        children?: ReactElementArray;
+>children : ReactElementArray
+>ReactElementArray : ReactElementArray
+
+        key?: number | string;
+>key : string | number
+
+        ref?: string;
+>ref : string
+
+        // Event Attributes
+
+        dangerouslySetInnerHTML?: {
+>dangerouslySetInnerHTML : { __html: string; }
+
+            __html: string;
+>__html : string
+
+        };
+    }
+    
+    interface HTMLAttributes extends ReactAttributes {
+>HTMLAttributes : HTMLAttributes
+>ReactAttributes : ReactAttributes
+
+        accept?: string;
+>accept : string
+
+        acceptCharset?: string;
+>acceptCharset : string
+
+        accessKey?: string;
+>accessKey : string
+
+        action?: string;
+>action : string
+
+        allowFullScreen?: boolean;
+>allowFullScreen : boolean
+
+        allowTransparency?: boolean;
+>allowTransparency : boolean
+
+        alt?: string;
+>alt : string
+
+        async?: boolean;
+>async : boolean
+
+        autoComplete?: boolean;
+>autoComplete : boolean
+
+        autoFocus?: boolean;
+>autoFocus : boolean
+
+        autoPlay?: boolean;
+>autoPlay : boolean
+
+        cellPadding?: number | string;
+>cellPadding : string | number
+
+        cellSpacing?: number | string;
+>cellSpacing : string | number
+
+        charSet?: string;
+>charSet : string
+
+        checked?: boolean;
+>checked : boolean
+
+        classID?: string;
+>classID : string
+
+        className?: string;
+>className : string
+
+        cols?: number;
+>cols : number
+
+        colSpan?: number;
+>colSpan : number
+
+        content?: string;
+>content : string
+
+        contentEditable?: boolean;
+>contentEditable : boolean
+
+        contextMenu?: string;
+>contextMenu : string
+
+        controls?: any;
+>controls : any
+
+        coords?: string;
+>coords : string
+
+        crossOrigin?: string;
+>crossOrigin : string
+
+        data?: string;
+>data : string
+
+        dateTime?: string;
+>dateTime : string
+
+        defer?: boolean;
+>defer : boolean
+
+        dir?: string;
+>dir : string
+
+        disabled?: boolean;
+>disabled : boolean
+
+        download?: any;
+>download : any
+
+        draggable?: boolean;
+>draggable : boolean
+
+        encType?: string;
+>encType : string
+
+        form?: string;
+>form : string
+
+        formNoValidate?: boolean;
+>formNoValidate : boolean
+
+        frameBorder?: number | string;
+>frameBorder : string | number
+
+        height?: number | string;
+>height : string | number
+
+        hidden?: boolean;
+>hidden : boolean
+
+        href?: string;
+>href : string
+
+        hrefLang?: string;
+>hrefLang : string
+
+        htmlFor?: string;
+>htmlFor : string
+
+        httpEquiv?: string;
+>httpEquiv : string
+
+        icon?: string;
+>icon : string
+
+        id?: string;
+>id : string
+
+        label?: string;
+>label : string
+
+        lang?: string;
+>lang : string
+
+        list?: string;
+>list : string
+
+        loop?: boolean;
+>loop : boolean
+
+        manifest?: string;
+>manifest : string
+
+        max?: number | string;
+>max : string | number
+
+        maxLength?: number;
+>maxLength : number
+
+        media?: string;
+>media : string
+
+        mediaGroup?: string;
+>mediaGroup : string
+
+        method?: string;
+>method : string
+
+        min?: number | string;
+>min : string | number
+
+        multiple?: boolean;
+>multiple : boolean
+
+        muted?: boolean;
+>muted : boolean
+
+        name?: string;
+>name : string
+
+        noValidate?: boolean;
+>noValidate : boolean
+
+        open?: boolean;
+>open : boolean
+
+        pattern?: string;
+>pattern : string
+
+        placeholder?: string;
+>placeholder : string
+
+        poster?: string;
+>poster : string
+
+        preload?: string;
+>preload : string
+
+        radioGroup?: string;
+>radioGroup : string
+
+        readOnly?: boolean;
+>readOnly : boolean
+
+        rel?: string;
+>rel : string
+
+        required?: boolean;
+>required : boolean
+
+        role?: string;
+>role : string
+
+        rows?: number;
+>rows : number
+
+        rowSpan?: number;
+>rowSpan : number
+
+        sandbox?: string;
+>sandbox : string
+
+        scope?: string;
+>scope : string
+
+        scrollLeft?: number;
+>scrollLeft : number
+
+        scrolling?: string;
+>scrolling : string
+
+        scrollTop?: number;
+>scrollTop : number
+
+        seamless?: boolean;
+>seamless : boolean
+
+        selected?: boolean;
+>selected : boolean
+
+        shape?: string;
+>shape : string
+
+        size?: number;
+>size : number
+
+        sizes?: string;
+>sizes : string
+
+        span?: number;
+>span : number
+
+        spellCheck?: boolean;
+>spellCheck : boolean
+
+        src?: string;
+>src : string
+
+        srcDoc?: string;
+>srcDoc : string
+
+        srcSet?: string;
+>srcSet : string
+
+        start?: number;
+>start : number
+
+        step?: number | string;
+>step : string | number
+
+        tabIndex?: number;
+>tabIndex : number
+
+        target?: string;
+>target : string
+
+        title?: string;
+>title : string
+
+        type?: string;
+>type : string
+
+        useMap?: string;
+>useMap : string
+
+        value?: string;
+>value : string
+
+        width?: number | string;
+>width : string | number
+
+        wmode?: string;
+>wmode : string
+
+        // Non-standard Attributes
+        autoCapitalize?: boolean;
+>autoCapitalize : boolean
+
+        autoCorrect?: boolean;
+>autoCorrect : boolean
+
+        property?: string;
+>property : string
+
+        itemProp?: string;
+>itemProp : string
+
+        itemScope?: boolean;
+>itemScope : boolean
+
+        itemType?: string;
+>itemType : string
+    }
+    
+    function createElement(type: string, props?: HTMLAttributes, ...rest: any[]): ReactHtmlElement;
+>createElement : { (type: string, props?: HTMLAttributes, ...rest: any[]): ReactHtmlElement; <P>(type: ComponentClass<P>, props?: P, ...rest: any[]): ReactCompositeElement<P>; }
+>type : string
+>props : HTMLAttributes
+>HTMLAttributes : HTMLAttributes
+>rest : any[]
+>ReactHtmlElement : ReactHtmlElement
+
+    function createElement<P>(type: ComponentClass<P>, props?: P, ...rest: any[]): ReactCompositeElement<P>;
+>createElement : { (type: string, props?: HTMLAttributes, ...rest: any[]): ReactHtmlElement; <P>(type: ComponentClass<P>, props?: P, ...rest: any[]): ReactCompositeElement<P>; }
+>P : P
+>type : ComponentClass<P>
+>ComponentClass : ComponentClass<P>
+>P : P
+>props : P
+>P : P
+>rest : any[]
+>ReactCompositeElement : ReactCompositeElement<P>
+>P : P
+}
+
+class TodoList extends React.Component<{ items: string[] },{}> {
+>TodoList : TodoList
+>React : typeof React
+>Component : React.Component<P, S>
+>items : string[]
+
+    render(): React.ReactElement {
+>render : () => React.ReactHtmlElement | React.ReactCompositeElement<any>
+>React : unknown
+>ReactElement : React.ReactHtmlElement | React.ReactCompositeElement<any>
+
+        return  <ul>{this.props.items.map(itemText => <li>{itemText}</li>)}</ul>;
+><ul>{this.props.items.map(itemText => <li>{itemText}</li>)}</ul> : React.ReactHtmlElement
+><ul> : {}
+>ul : unknown
+>this.props.items.map(itemText => <li>{itemText}</li>) : React.ReactHtmlElement[]
+>this.props.items.map : <U>(callbackfn: (value: string, index: number, array: string[]) => U, thisArg?: any) => U[]
+>this.props.items : string[]
+>this.props : { items: string[]; }
+>this : TodoList
+>props : { items: string[]; }
+>items : string[]
+>map : <U>(callbackfn: (value: string, index: number, array: string[]) => U, thisArg?: any) => U[]
+>itemText => <li>{itemText}</li> : (itemText: string) => React.ReactHtmlElement
+>itemText : string
+><li>{itemText}</li> : React.ReactHtmlElement
+><li> : {}
+>li : unknown
+>itemText : string
+>li : unknown
+>ul : unknown
+    }
+}
+
+
+class TodoApp extends React.Component<{},{items?: string[]; text?: string}> {
+>TodoApp : TodoApp
+>React : typeof React
+>Component : React.Component<P, S>
+>items : string[]
+>text : string
+
+    state = {items: [], text: ''};
+>state : { items: any[]; text: string; }
+>{items: [], text: ''} : { items: undefined[]; text: string; }
+>items : undefined[]
+>[] : undefined[]
+>text : string
+    
+    onChange = (e: any) => {
+>onChange : (e: any) => void
+>(e: any) => {        this.setState({            text: <string>e.target.value        });    } : (e: any) => void
+>e : any
+
+        this.setState({
+>this.setState({            text: <string>e.target.value        }) : void
+>this.setState : (state: { items?: string[]; text?: string; }, callback?: () => void) => void
+>this : TodoApp
+>setState : (state: { items?: string[]; text?: string; }, callback?: () => void) => void
+>{            text: <string>e.target.value        } : { text: string; }
+
+            text: <string>e.target.value
+>text : string
+><string>e.target.value : string
+>e.target.value : any
+>e.target : any
+>e : any
+>target : any
+>value : any
+
+        });
+    }
+    
+    handleSubmit = (e: any) => {
+>handleSubmit : (e: any) => void
+>(e: any) => {        e.preventDefault();        var nextItems = this.state.items.concat([this.state.text]);        var nextText = '';        this.setState({items: nextItems, text: nextText});    } : (e: any) => void
+>e : any
+
+        e.preventDefault();
+>e.preventDefault() : any
+>e.preventDefault : any
+>e : any
+>preventDefault : any
+
+        var nextItems = this.state.items.concat([this.state.text]);
+>nextItems : any[]
+>this.state.items.concat([this.state.text]) : any[]
+>this.state.items.concat : { <U extends any[]>(...items: U[]): any[]; (...items: any[]): any[]; }
+>this.state.items : any[]
+>this.state : { items: any[]; text: string; }
+>this : TodoApp
+>state : { items: any[]; text: string; }
+>items : any[]
+>concat : { <U extends any[]>(...items: U[]): any[]; (...items: any[]): any[]; }
+>[this.state.text] : string[]
+>this.state.text : string
+>this.state : { items: any[]; text: string; }
+>this : TodoApp
+>state : { items: any[]; text: string; }
+>text : string
+
+        var nextText = '';
+>nextText : string
+
+        this.setState({items: nextItems, text: nextText});
+>this.setState({items: nextItems, text: nextText}) : void
+>this.setState : (state: { items?: string[]; text?: string; }, callback?: () => void) => void
+>this : TodoApp
+>setState : (state: { items?: string[]; text?: string; }, callback?: () => void) => void
+>{items: nextItems, text: nextText} : { items: any[]; text: string; }
+>items : any[]
+>nextItems : any[]
+>text : string
+>nextText : string
+    }
+    
+    render(): React.ReactElement  {
+>render : () => React.ReactHtmlElement | React.ReactCompositeElement<any>
+>React : unknown
+>ReactElement : React.ReactHtmlElement | React.ReactCompositeElement<any>
+
+        return (
+>(            <div>                <h3>TODO</h3>                <TodoList items={this.state.items} />                <form onSubmit={this.handleSubmit}>                    <input onChange={this.onChange} value={this.state.text} />                    <button>{'Add #' + (this.state.items.length + 1)}</button>                </form>            </div>        ) : React.ReactHtmlElement
+
+            <div>
+><div>                <h3>TODO</h3>                <TodoList items={this.state.items} />                <form onSubmit={this.handleSubmit}>                    <input onChange={this.onChange} value={this.state.text} />                    <button>{'Add #' + (this.state.items.length + 1)}</button>                </form>            </div> : React.ReactHtmlElement
+><div> : {}
+>div : unknown
+
+                <h3>TODO</h3>
+><h3>TODO</h3> : React.ReactHtmlElement
+><h3> : {}
+>h3 : unknown
+>h3 : unknown
+
+                <TodoList items={this.state.items} />
+><TodoList items={this.state.items} /> : React.ReactCompositeElement<{ items: string[]; }>
+><TodoList items={this.state.items} /> : { items: any[]; }
+>TodoList : typeof TodoList
+>items : any[]
+>this.state.items : any[]
+>this.state : { items: any[]; text: string; }
+>this : TodoApp
+>state : { items: any[]; text: string; }
+>items : any[]
+
+                <form onSubmit={this.handleSubmit}>
+><form onSubmit={this.handleSubmit}>                    <input onChange={this.onChange} value={this.state.text} />                    <button>{'Add #' + (this.state.items.length + 1)}</button>                </form> : React.ReactHtmlElement
+><form onSubmit={this.handleSubmit}> : { onSubmit: (e: any) => void; }
+>form : unknown
+>onSubmit : (e: any) => void
+>this.handleSubmit : (e: any) => void
+>this : TodoApp
+>handleSubmit : (e: any) => void
+
+                    <input onChange={this.onChange} value={this.state.text} />
+><input onChange={this.onChange} value={this.state.text} /> : React.ReactHtmlElement
+><input onChange={this.onChange} value={this.state.text} /> : { onChange: (e: any) => void; value: string; }
+>input : unknown
+>onChange : (e: any) => void
+>this.onChange : (e: any) => void
+>this : TodoApp
+>onChange : (e: any) => void
+>value : string
+>this.state.text : string
+>this.state : { items: any[]; text: string; }
+>this : TodoApp
+>state : { items: any[]; text: string; }
+>text : string
+
+                    <button>{'Add #' + (this.state.items.length + 1)}</button>
+><button>{'Add #' + (this.state.items.length + 1)}</button> : React.ReactHtmlElement
+><button> : {}
+>button : unknown
+>'Add #' + (this.state.items.length + 1) : string
+>(this.state.items.length + 1) : number
+>this.state.items.length + 1 : number
+>this.state.items.length : number
+>this.state.items : any[]
+>this.state : { items: any[]; text: string; }
+>this : TodoApp
+>state : { items: any[]; text: string; }
+>items : any[]
+>length : number
+>button : unknown
+
+                </form>
+>form : unknown
+
+            </div>
+>div : unknown
+
+        );
+    }
+}
+
+

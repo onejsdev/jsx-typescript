@@ -1,0 +1,11 @@
+tests/cases/conformance/jsx/jsxFactoryIsNotDefined3.ts(4,1): error TS2339: Property 'something' does not exist on type '{}'.
+
+
+==== tests/cases/conformance/jsx/jsxFactoryIsNotDefined3.ts (1 errors) ====
+    /// <JSX factory="test.something.somethingelse" />
+    var test: {};
+    
+    <div/>  
+    ~~~~~~
+!!! error TS2339: Property 'something' does not exist on type '{}'.
+    

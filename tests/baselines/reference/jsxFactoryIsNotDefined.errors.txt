@@ -1,0 +1,9 @@
+tests/cases/conformance/jsx/jsxFactoryIsNotDefined.ts(2,1): error TS2304: Cannot find name 'Something'.
+
+
+==== tests/cases/conformance/jsx/jsxFactoryIsNotDefined.ts (1 errors) ====
+    /// <JSX factory="Something" />
+    <div/>  
+    ~~~~~~
+!!! error TS2304: Cannot find name 'Something'.
+    

@@ -1,0 +1,12 @@
+tests/cases/conformance/jsx/jsxFactoryIsNotCallable.ts(5,1): error TS2349: Cannot invoke an expression whose type lacks a call signature.
+
+
+==== tests/cases/conformance/jsx/jsxFactoryIsNotCallable.ts (1 errors) ====
+    /// <JSX factory="x" />
+    
+    var x: string;
+    
+    <div/>  
+    ~~~~~~
+!!! error TS2349: Cannot invoke an expression whose type lacks a call signature.
+    

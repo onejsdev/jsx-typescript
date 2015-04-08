@@ -1,0 +1,121 @@
+tests/cases/conformance/jsx/jsxCheckTypes.ts(15,2): error TS2345: Argument of type 'typeof NotAString' is not assignable to parameter of type 'string'.
+tests/cases/conformance/jsx/jsxCheckTypes.ts(17,38): error TS2345: Argument of type 'boolean' is not assignable to parameter of type 'string'.
+tests/cases/conformance/jsx/jsxCheckTypes.ts(19,38): error TS2345: Argument of type 'NotAString' is not assignable to parameter of type 'string'.
+tests/cases/conformance/jsx/jsxCheckTypes.ts(21,37): error TS2345: Argument of type '{ notAString: boolean; }' is not assignable to parameter of type 'string'.
+tests/cases/conformance/jsx/jsxCheckTypes.ts(24,1): error TS2345: Argument of type '{ attribute1: number; attribute2: boolean; }' is not assignable to parameter of type '{ attribute1: string; attribute2: boolean; }'.
+  Types of property 'attribute1' are incompatible.
+    Type 'number' is not assignable to type 'string'.
+tests/cases/conformance/jsx/jsxCheckTypes.ts(26,1): error TS2345: Argument of type '{ attribute1: string; attribute2: number; }' is not assignable to parameter of type '{ attribute1: string; attribute2: boolean; }'.
+  Types of property 'attribute2' are incompatible.
+    Type 'number' is not assignable to type 'boolean'.
+tests/cases/conformance/jsx/jsxCheckTypes.ts(28,1): error TS2345: Argument of type '{ attribute1: string; }' is not assignable to parameter of type '{ attribute1: string; attribute2: boolean; }'.
+  Property 'attribute2' is missing in type '{ attribute1: string; }'.
+tests/cases/conformance/jsx/jsxCheckTypes.ts(30,1): error TS2345: Argument of type '{ attribute2: boolean; }' is not assignable to parameter of type '{ attribute1: string; attribute2: boolean; }'.
+  Property 'attribute1' is missing in type '{ attribute2: boolean; }'.
+tests/cases/conformance/jsx/jsxCheckTypes.ts(32,1): error TS2346: Supplied parameters do not match any signature of call target.
+tests/cases/conformance/jsx/jsxCheckTypes.ts(36,1): error TS2345: Argument of type '{ attribute1: number; }' is not assignable to parameter of type '{ attribute1: string; attribute2: boolean; }'.
+  Types of property 'attribute1' are incompatible.
+    Type 'number' is not assignable to type 'string'.
+tests/cases/conformance/jsx/jsxCheckTypes.ts(42,1): error TS2345: Argument of type '{ attribute1: number; }' is not assignable to parameter of type '{ attribute1: string; attribute2: boolean; }'.
+  Types of property 'attribute1' are incompatible.
+    Type 'number' is not assignable to type 'string'.
+tests/cases/conformance/jsx/jsxCheckTypes.ts(46,1): error TS2345: Argument of type '{ attribute1: number; attribute2: boolean; }' is not assignable to parameter of type '{ attribute1: string; attribute2: boolean; }'.
+  Types of property 'attribute1' are incompatible.
+    Type 'number' is not assignable to type 'string'.
+tests/cases/conformance/jsx/jsxCheckTypes.ts(50,1): error TS2345: Argument of type '{ attribute1: string; attribute2: string; }' is not assignable to parameter of type '{ attribute1: string; attribute2: boolean; }'.
+  Types of property 'attribute2' are incompatible.
+    Type 'string' is not assignable to type 'boolean'.
+
+
+==== tests/cases/conformance/jsx/jsxCheckTypes.ts (13 errors) ====
+    /// <JSX factory="React.createElement" />
+    declare var React: {
+        createElement(el: string, props: { attribute1: string; attribute2: boolean }, firstChild: string, ...children: string[]): { notAString: boolean };
+    }
+    
+    class NotAString {
+    }
+    
+    declare var alert: any;
+    
+    <div attribute1="hello" attribute2 > hello </div>;
+    
+    <div attribute1="hello" attribute2={true}> hello </div>;
+    
+    <NotAString attribute1="hello" attribute2> hello </NotAString>;
+     ~~~~~~~~~~
+!!! error TS2345: Argument of type 'typeof NotAString' is not assignable to parameter of type 'string'.
+    
+    <div attribute1="hello" attribute2 > {true} </div>;
+                                         ~~~~~~
+!!! error TS2345: Argument of type 'boolean' is not assignable to parameter of type 'string'.
+    
+    <div attribute1="hello" attribute2 > {new NotAString()} </div>;
+                                         ~~~~~~~~~~~~~~~~~~
+!!! error TS2345: Argument of type 'NotAString' is not assignable to parameter of type 'string'.
+    
+    <div attribute1="hello" attribute2 ><div attribute1="hello" attribute2 > hey </div></div>;
+                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS2345: Argument of type '{ notAString: boolean; }' is not assignable to parameter of type 'string'.
+    
+    
+    <div attribute1={3} attribute2 > hello </div>;
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS2345: Argument of type '{ attribute1: number; attribute2: boolean; }' is not assignable to parameter of type '{ attribute1: string; attribute2: boolean; }'.
+!!! error TS2345:   Types of property 'attribute1' are incompatible.
+!!! error TS2345:     Type 'number' is not assignable to type 'string'.
+    
+    <div attribute1="hello" attribute2={3} > hello </div>;
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS2345: Argument of type '{ attribute1: string; attribute2: number; }' is not assignable to parameter of type '{ attribute1: string; attribute2: boolean; }'.
+!!! error TS2345:   Types of property 'attribute2' are incompatible.
+!!! error TS2345:     Type 'number' is not assignable to type 'boolean'.
+    
+    <div attribute1="hello"> hello </div>;
+    ~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS2345: Argument of type '{ attribute1: string; }' is not assignable to parameter of type '{ attribute1: string; attribute2: boolean; }'.
+!!! error TS2345:   Property 'attribute2' is missing in type '{ attribute1: string; }'.
+    
+    <div attribute2> hello </div>;
+    ~~~~~~~~~~~~~~~~
+!!! error TS2345: Argument of type '{ attribute2: boolean; }' is not assignable to parameter of type '{ attribute1: string; attribute2: boolean; }'.
+!!! error TS2345:   Property 'attribute1' is missing in type '{ attribute2: boolean; }'.
+    
+    <div attribute1="hello" attribute2 />;
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS2346: Supplied parameters do not match any signature of call target.
+    
+    <div {...{attribute1: 'hello', attribute2: true}}> hello </div>; 
+    
+    <div {...{attribute1: 3}} > hello </div>;
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS2345: Argument of type '{ attribute1: number; }' is not assignable to parameter of type '{ attribute1: string; attribute2: boolean; }'.
+!!! error TS2345:   Types of property 'attribute1' are incompatible.
+!!! error TS2345:     Type 'number' is not assignable to type 'string'.
+    
+    <div {...(() =>({attribute1: 'hello', attribute2: true}))()}> hello </div>;
+    
+    <div {...(alert('hello'), {attribute1: 'hello', attribute2: true})}  > hello </div>;
+    
+    <div {...(alert('hello'), {attribute1: 3})}> hello </div>;
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS2345: Argument of type '{ attribute1: number; }' is not assignable to parameter of type '{ attribute1: string; attribute2: boolean; }'.
+!!! error TS2345:   Types of property 'attribute1' are incompatible.
+!!! error TS2345:     Type 'number' is not assignable to type 'string'.
+        
+    <div attribute1={3} {...{attribute1: 'hello', attribute2: true}}> hello </div>; 
+    
+    <div  {...{attribute1: 'hello', attribute2: true}} attribute1={3} > hello </div>; 
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS2345: Argument of type '{ attribute1: number; attribute2: boolean; }' is not assignable to parameter of type '{ attribute1: string; attribute2: boolean; }'.
+!!! error TS2345:   Types of property 'attribute1' are incompatible.
+!!! error TS2345:     Type 'number' is not assignable to type 'string'.
+    
+    <div  {...{attribute1: 'hello', attribute2: 3}} attribute2 > hello </div>; 
+    
+    <div  {...{attribute1: 'hello', attribute2: 3}} attribute2 {...{ attribute2: 'hello' }} > hello </div>; 
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS2345: Argument of type '{ attribute1: string; attribute2: string; }' is not assignable to parameter of type '{ attribute1: string; attribute2: boolean; }'.
+!!! error TS2345:   Types of property 'attribute2' are incompatible.
+!!! error TS2345:     Type 'string' is not assignable to type 'boolean'.
+    

@@ -1,0 +1,115 @@
+=== tests/cases/conformance/jsx/jsxAndTypeAssertion.ts ===
+/// <JSX factory="createElement" />
+
+declare var createElement: any;
+>createElement : any
+
+class foo {}
+>foo : foo
+
+var x: any;
+>x : any
+
+x = <any> { test: <any></any> };
+>x = <any> { test: <any></any> } : any
+>x : any
+><any> { test: <any></any> } : any
+>{ test: <any></any> } : { test: any; }
+>test : any
+><any></any> : any
+><any> : {}
+>any : unknown
+>any : unknown
+
+x = <any><any></any>;
+>x = <any><any></any> : any
+>x : any
+><any><any></any> : any
+><any></any> : any
+><any> : {}
+>any : unknown
+>any : unknown
+ 
+x = <foo>hello {<foo>{}} </foo>;
+>x = <foo>hello {<foo>{}} </foo> : any
+>x : any
+><foo>hello {<foo>{}} </foo> : any
+><foo> : {}
+>foo : typeof foo
+><foo>{} : foo
+>foo : foo
+>{} : {}
+>foo : unknown
+
+x = <foo test={<foo>{}}>hello</foo>;
+>x = <foo test={<foo>{}}>hello</foo> : any
+>x : any
+><foo test={<foo>{}}>hello</foo> : any
+><foo test={<foo>{}}> : { test: foo; }
+>foo : typeof foo
+>test : foo
+><foo>{} : foo
+>foo : foo
+>{} : {}
+>foo : unknown
+
+x = <foo test={<foo>{}}>hello{<foo>{}}</foo>;
+>x = <foo test={<foo>{}}>hello{<foo>{}}</foo> : any
+>x : any
+><foo test={<foo>{}}>hello{<foo>{}}</foo> : any
+><foo test={<foo>{}}> : { test: foo; }
+>foo : typeof foo
+>test : foo
+><foo>{} : foo
+>foo : foo
+>{} : {}
+><foo>{} : foo
+>foo : foo
+>{} : {}
+>foo : unknown
+
+x = <foo>x</foo>, x = <foo/>;
+>x = <foo>x</foo>, x = <foo/> : any
+>x = <foo>x</foo> : any
+>x : any
+><foo>x</foo> : any
+><foo> : {}
+>foo : typeof foo
+>foo : unknown
+>x = <foo/> : any
+>x : any
+><foo/> : any
+><foo/> : {}
+>foo : typeof foo
+
+<foo>{<foo><foo>{/foo/.test(x) ? <foo><foo></foo> : <foo><foo></foo>}</foo>}</foo>
+><foo>{<foo><foo>{/foo/.test(x) ? <foo><foo></foo> : <foo><foo></foo>}</foo>}</foo> : any
+><foo> : {}
+>foo : typeof foo
+><foo><foo>{/foo/.test(x) ? <foo><foo></foo> : <foo><foo></foo>}</foo> : foo
+>foo : foo
+><foo>{/foo/.test(x) ? <foo><foo></foo> : <foo><foo></foo>}</foo> : any
+><foo> : {}
+>foo : typeof foo
+>/foo/.test(x) ? <foo><foo></foo> : <foo><foo></foo> : foo
+>/foo/.test(x) : boolean
+>/foo/.test : (string: string) => boolean
+>test : (string: string) => boolean
+>x : any
+><foo><foo></foo> : foo
+>foo : foo
+><foo></foo> : any
+><foo> : {}
+>foo : typeof foo
+>foo : unknown
+><foo><foo></foo> : foo
+>foo : foo
+><foo></foo> : any
+><foo> : {}
+>foo : typeof foo
+>foo : unknown
+>foo : unknown
+>foo : unknown
+
+    
+
