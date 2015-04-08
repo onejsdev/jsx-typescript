@@ -733,6 +733,7 @@ module ts {
         public amdDependencies: { name: string; path: string }[];
         public amdModuleName: string;
         public referencedFiles: FileReference[];
+        public jsxFactory: string[];
 
         public syntacticDiagnostics: Diagnostic[];
         public referenceDiagnostics: Diagnostic[];
@@ -2083,7 +2084,8 @@ module ts {
     /** Returns true if node is a name of an object literal property, e.g. "a" in x = { "a": 1 } */
     function isNameOfPropertyAssignment(node: Node): boolean {
         return (node.kind === SyntaxKind.Identifier || node.kind === SyntaxKind.StringLiteral || node.kind === SyntaxKind.NumericLiteral) &&
-            (node.parent.kind === SyntaxKind.PropertyAssignment || node.parent.kind === SyntaxKind.ShorthandPropertyAssignment) && (<PropertyDeclaration>node.parent).name === node;
+            (node.parent.kind === SyntaxKind.PropertyAssignment || node.parent.kind === SyntaxKind.ShorthandPropertyAssignment || node.parent.kind === SyntaxKind.JSXAttribute) && 
+            (<PropertyDeclaration>node.parent).name === node;
     }
 
     function isLiteralNameOfPropertyDeclarationOrIndexAccess(node: Node): boolean {
@@ -2824,6 +2826,7 @@ module ts {
 
             function tryGetGlobalSymbols(): boolean {
                 let containingObjectLiteral = getContainingObjectLiteralApplicableForCompletion(contextToken);
+                let containingJSXOpeningElement = getContainingJSXOpeningElementApplicableForCompletion(contextToken);
                 if (containingObjectLiteral) {
                     // Object literal expression, look up possible property names from contextual type
                     isMemberCompletion = true;
@@ -2838,6 +2841,23 @@ module ts {
                     if (contextualTypeMembers && contextualTypeMembers.length > 0) {
                         // Add filtered items to the completion list
                         symbols = filterContextualMembersList(contextualTypeMembers, containingObjectLiteral.properties);
+                    }
+                }
+                else if (containingJSXOpeningElement) {
+                    isMemberCompletion = true;
+                    isNewIdentifierLocation = true;
+
+                    let contextualType = typeInfoResolver.getContextualType(containingJSXOpeningElement);
+                    if (!contextualType) {
+                        return false;
+                    }
+
+                    let contextualTypeMembers = typeInfoResolver.getPropertiesOfType(contextualType);
+                    if (contextualTypeMembers && contextualTypeMembers.length > 0) {
+                        // Filter SpreadAttribute
+                        var nonSpreadAttributes = <JSXAttribute[]>containingJSXOpeningElement.attributes.filter(attr => attr.kind === SyntaxKind.JSXAttribute);
+
+                        symbols = filterContextualMembersList(contextualTypeMembers, nonSpreadAttributes);
                     }
                 }
                 else if (getAncestor(contextToken, SyntaxKind.ImportClause)) {
@@ -3038,6 +3058,43 @@ module ts {
                 return undefined;
             }
 
+            function getContainingJSXOpeningElementApplicableForCompletion(previousToken: Node): JSXOpeningElement {
+                // The locations in an jsx opening element that are applicable for completion are property name definition locations.
+
+                if (previousToken) {
+                    var parent = previousToken.parent;
+                    switch (previousToken.kind) {
+                        case SyntaxKind.Identifier: //<div | && <div attr |
+                            while (parent && (
+                                parent.kind === SyntaxKind.QualifiedName ||
+                                parent.kind === SyntaxKind.JSXAttribute ||
+                                parent.kind === SyntaxKind.JSXTag
+                                )) {
+                                parent = parent.parent;
+                            }
+                            break;
+
+                        case SyntaxKind.CloseBraceToken: //<div attr={expression} |
+                            if (parent && parent.kind === SyntaxKind.JSXExpression) {
+                                parent = parent.parent
+                            }
+                        // walk through
+                        case SyntaxKind.StringLiteral: //<div attr="something" |
+                            
+                            if (parent && parent.kind === SyntaxKind.JSXAttribute) {
+                                parent = parent.parent;
+                            }
+                            break;
+                    }
+
+                    if (parent && parent.kind === SyntaxKind.JSXOpeningElement) {
+                        return <JSXOpeningElement>parent;
+                    }
+                }
+
+                return undefined;
+            }
+
             function isFunction(kind: SyntaxKind): boolean {
                 switch (kind) {
                     case SyntaxKind.FunctionExpression:
@@ -3181,7 +3238,7 @@ module ts {
 
                 let existingMemberNames: Map<boolean> = {};
                 forEach(existingMembers, m => {
-                    if (m.kind !== SyntaxKind.PropertyAssignment && m.kind !== SyntaxKind.ShorthandPropertyAssignment) {
+                    if (m.kind !== SyntaxKind.PropertyAssignment && m.kind !== SyntaxKind.ShorthandPropertyAssignment && m.kind !== SyntaxKind.JSXAttribute) {
                         // Ignore omitted expressions for missing members in the object literal
                         return;
                     }
@@ -5432,6 +5489,7 @@ module ts {
                 case SyntaxKind.FunctionExpression:
                 case SyntaxKind.ArrowFunction:
                 case SyntaxKind.CatchClause:
+                case SyntaxKind.JSXAttribute:
                     return SemanticMeaning.Value;
 
                 case SyntaxKind.TypeParameter:
