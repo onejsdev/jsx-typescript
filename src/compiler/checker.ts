@@ -3829,7 +3829,7 @@ module ts {
 
         // Returns true if the given expression contains (at any level of nesting) a function or arrow expression
         // that is subject to contextual typing.
-        function isContextSensitive(node: Expression | MethodDeclaration | ObjectLiteralElement): boolean {
+        function isContextSensitive(node: Expression | MethodDeclaration | ObjectLiteralElement | JSXAttribute | JSXSpreadAttribute | JSXOpeningElement): boolean {
             Debug.assert(node.kind !== SyntaxKind.MethodDeclaration || isObjectLiteralMethod(node));
             switch (node.kind) {
                 case SyntaxKind.FunctionExpression:
@@ -3852,6 +3852,16 @@ module ts {
                     return isContextSensitiveFunctionLikeDeclaration(<MethodDeclaration>node);
                 case SyntaxKind.ParenthesizedExpression:
                     return isContextSensitive((<ParenthesizedExpression>node).expression);
+                case SyntaxKind.JSXElement:
+                    return isContextSensitive((<JSXElement>node).openingElement) || forEach((<JSXElement>node).children, isContextSensitive);
+                case SyntaxKind.JSXOpeningElement:
+                    return forEach((<JSXOpeningElement>node).attributes, isContextSensitive);
+                case SyntaxKind.JSXAttribute:
+                    return (<JSXAttribute>node).initializer && isContextSensitive((<JSXAttribute>node).initializer);
+                case SyntaxKind.JSXSpreadAttribute:
+                    return isContextSensitive((<JSXSpreadAttribute>node).expression);
+                case SyntaxKind.JSXExpression:
+                    return (<JSXExpression>node).expression && isContextSensitive((<JSXExpression>node).expression);
             }
 
             return false;
@@ -5135,6 +5145,11 @@ module ts {
                     case SyntaxKind.ThrowStatement:
                     case SyntaxKind.TryStatement:
                     case SyntaxKind.CatchClause:
+                    case SyntaxKind.JSXElement:
+                    case SyntaxKind.JSXAttribute:
+                    case SyntaxKind.JSXSpreadAttribute:
+                    case SyntaxKind.JSXOpeningElement:
+                    case SyntaxKind.JSXExpression:
                         return forEachChild(node, isAssignedIn);
                 }
                 return false;
@@ -5782,8 +5797,8 @@ module ts {
             return getContextualTypeForObjectLiteralElement(node);
         }
 
-        function getContextualTypeForObjectLiteralElement(element: ObjectLiteralElement) {
-            let objectLiteral = <ObjectLiteralExpression>element.parent;
+        function getContextualTypeForObjectLiteralElement(element: ObjectLiteralElement | JSXAttribute) {
+            let objectLiteral = <ObjectLiteralExpression | JSXOpeningElement>element.parent;
             let type = getContextualType(objectLiteral);
             if (type) {
                 if (!hasDynamicName(element)) {
@@ -5855,7 +5870,8 @@ module ts {
                 case SyntaxKind.BinaryExpression:
                     return getContextualTypeForBinaryOperand(node);
                 case SyntaxKind.PropertyAssignment:
-                    return getContextualTypeForObjectLiteralElement(<ObjectLiteralElement>parent);
+                case SyntaxKind.JSXAttribute:
+                    return getContextualTypeForObjectLiteralElement(<ObjectLiteralElement | JSXAttribute>parent);
                 case SyntaxKind.ArrayLiteralExpression:
                     return getContextualTypeForElementExpression(node);
                 case SyntaxKind.ConditionalExpression:
@@ -5865,6 +5881,8 @@ module ts {
                     return getContextualTypeForSubstitutionExpression(<TemplateExpression>parent.parent, node);
                 case SyntaxKind.ParenthesizedExpression:
                     return getContextualType(<ParenthesizedExpression>parent);
+                case SyntaxKind.JSXElement:
+                    return getContextualTypeForArgument(<JSXElement>parent, node);
             }
             return undefined;
         }
@@ -6140,6 +6158,60 @@ module ts {
             }
         }
 
+        function checkJSXElement(node: JSXElement, contextualMapper?: TypeMapper): Type {
+            checkGrammarJSXElement(node);
+            return getReturnTypeOfSignature(getResolvedSignature(node));
+        }
+
+        function checkJSXOpeningElement(node: JSXOpeningElement, contextualMapper?: TypeMapper): Type {
+            const propertiesTable: SymbolTable = {};
+            let typeFlags: TypeFlags;
+            for (let memberDecl of node.attributes) {
+                if (memberDecl.kind === SyntaxKind.JSXAttribute) {
+                    let attr = <JSXAttribute>memberDecl;
+                    let member = attr.symbol;
+                    let type = attr.initializer ? checkExpression(attr.initializer) : booleanType;
+                    typeFlags |= type.flags;
+                    let prop = <TransientSymbol>createSymbol(SymbolFlags.Property | SymbolFlags.Transient | member.flags, member.name);
+                    prop.declarations = member.declarations;
+                    prop.parent = member.parent;
+                    if (member.valueDeclaration) {
+                        prop.valueDeclaration = member.valueDeclaration;
+                    }
+                    prop.type = type;
+                    prop.target = member;
+                    member = prop;
+
+                    propertiesTable[member.name] = member;
+                } 
+                else {
+                    let type = checkExpression((<JSXSpreadAttribute>memberDecl).expression);
+                    const properties = getPropertiesOfObjectType(type);
+                    for (var i = 0; i < properties.length; i++) {
+                        var prop = <TransientSymbol>properties[i];
+                        typeFlags |= prop.type.flags;
+                        propertiesTable[prop.name] = prop;
+                    }
+                }
+            }
+
+            const result = createAnonymousType(node.symbol, propertiesTable, emptyArray, emptyArray, undefined, undefined);
+            result.flags |= TypeFlags.ObjectLiteral | TypeFlags.ContainsObjectLiteral | (typeFlags & TypeFlags.ContainsUndefinedOrNull);
+            return result;
+        }
+
+        function checkJSXTag(node: JSXTag): Type {
+            if (node.name.kind === SyntaxKind.Identifier) {
+                var text = (<Identifier>node.name).text;
+                if (text.toLowerCase() === text) {
+                    return stringType;
+                } else {
+                    return checkIdentifier(<Identifier>node.name)
+                }
+            }
+            return checkQualifiedName(<QualifiedName>node.name);
+        }
+
         // If a symbol is a synthesized symbol with no value declaration, we assume it is a property. Example of this are the synthesized
         // '.prototype' property as well as synthesized tuple index properties.
         function getDeclarationKindFromSymbol(s: Symbol) {
@@ -6412,6 +6484,13 @@ module ts {
         function resolveUntypedCall(node: CallLikeExpression): Signature {
             if (node.kind === SyntaxKind.TaggedTemplateExpression) {
                 checkExpression((<TaggedTemplateExpression>node).template);
+            } 
+            else if (node.kind === SyntaxKind.JSXElement) {
+                checkExpression((<JSXElement>node).openingElement.tag);
+                checkExpression((<JSXElement>node).openingElement);
+                forEach((<JSXElement>node).children, argument => {
+                    checkExpression(argument);
+                });
             }
             else {
                 forEach((<CallExpression>node).arguments, argument => {
@@ -6519,6 +6598,10 @@ module ts {
                     callIsIncomplete = !!templateLiteral.isUnterminated;
                 }
             }
+            else if (node.kind === SyntaxKind.JSXElement) {
+                var jsxElement = <JSXElement>node;
+                adjustedArgCount = 2 + jsxElement.children.length;
+            }
             else {
                 let callExpression = <CallExpression>node;
                 if (!callExpression.arguments) {
@@ -6620,6 +6703,10 @@ module ts {
                     if (i === 0 && args[i].parent.kind === SyntaxKind.TaggedTemplateExpression) {
                         argType = globalTemplateStringsArrayType;
                     }
+                    else if (i > 0 && args[0].parent.kind === SyntaxKind.JSXOpeningElement) {
+                        // for better integration with React typing, type inference with JSXElement is only made on the first argument (tag)
+                        break;
+                    }
                     else {
                         // For context sensitive arguments we pass the identityMapper, which is a signal to treat all
                         // context sensitive function expressions as wildcards
@@ -6706,6 +6793,9 @@ module ts {
                     });
                 }
             }
+            else if (node.kind === SyntaxKind.JSXElement) {
+                args = [(<JSXElement>node).openingElement.tag, (<JSXElement>node).openingElement, ...(<JSXElement>node).children];
+            }
             else {
                 args = (<CallExpression>node).arguments || emptyArray;
             }
@@ -6737,10 +6827,11 @@ module ts {
 
         function resolveCall(node: CallLikeExpression, signatures: Signature[], candidatesOutArray: Signature[]): Signature {
             let isTaggedTemplate = node.kind === SyntaxKind.TaggedTemplateExpression;
+            let isJSXElement = node.kind === SyntaxKind.JSXElement;
 
             let typeArguments: TypeNode[];
 
-            if (!isTaggedTemplate) {
+            if (!isTaggedTemplate && !isJSXElement) {
                 typeArguments = getEffectiveTypeArguments(<CallExpression>node);
 
                 // We already perform checking on the type arguments on the class declaration itself.
@@ -6843,7 +6934,7 @@ module ts {
                 checkApplicableSignature(node, args, candidateForArgumentError, assignableRelation, /*excludeArgument*/ undefined, /*reportErrors*/ true);
             }
             else if (candidateForTypeArgumentError) {
-                if (!isTaggedTemplate && (<CallExpression>node).typeArguments) {
+                if (!isTaggedTemplate  && !isJSXElement && (<CallExpression>node).typeArguments) {
                     checkTypeArguments(candidateForTypeArgumentError, (<CallExpression>node).typeArguments, [], /*reportErrors*/ true)
                 }
                 else {
@@ -6868,6 +6959,9 @@ module ts {
             //  declare function f(a: { xa: number; xb: number; });
             //  f({ |
             if (!produceDiagnostics) {
+                if (isJSXElement && candidateForArgumentError) {
+                    return candidateForArgumentError;
+                } 
                 for (let candidate of candidates) {
                     if (hasCorrectArity(node, args, candidate)) {
                         return candidate;
@@ -7076,6 +7170,66 @@ module ts {
             return resolveCall(node, callSignatures, candidatesOutArray);
         }
 
+        function resolveJSXFactory(node: JSXElement): Type {
+            let sourcefile = getSourceFileOfNode(node);
+            let currentType: Type;
+
+            for (var name of sourcefile.jsxFactory) {
+                if (!currentType) {
+                    let symbol = resolveName(node, name, SymbolFlags.Value | SymbolFlags.ExportValue, Diagnostics.Cannot_find_name_0, name);
+                    if (!symbol) {
+                        return unknownType;
+                    }
+                    symbol = getExportSymbolOfValueSymbolIfExported(symbol);
+                    currentType = getTypeOfSymbol(symbol);
+                }
+                else {
+                    let apparentType = getApparentType(currentType);
+                    if (apparentType === unknownType) {
+                        return unknownType;
+                    }
+                    let prop = getPropertyOfType(apparentType, name);
+                    if (!prop) {
+                        error(node, Diagnostics.Property_0_does_not_exist_on_type_1, name, typeToString(apparentType));
+                        return unknownType;
+                    }
+                    currentType = getTypeOfSymbol(prop);
+                }
+
+                if (currentType === unknownType || currentType === anyType) {
+                    return currentType;
+                } 
+            }
+
+            return currentType;
+        }
+
+        function resolveJSXElement(node: JSXElement, candidatesOutArray: Signature[]): Signature {
+            let funcType: Type = resolveJSXFactory(node);
+            let apparentType = getApparentType(funcType);
+
+            if (apparentType === unknownType) {
+                return resolveErrorCall(node);
+            }
+
+            let callSignatures = getSignaturesOfType(apparentType, SignatureKind.Call);
+            let constructSignatures = getSignaturesOfType(apparentType, SignatureKind.Construct);
+            if (funcType === anyType || (!callSignatures.length && !constructSignatures.length && !(funcType.flags & TypeFlags.Union) && isTypeAssignableTo(funcType, globalFunctionType))) {
+                return resolveUntypedCall(node);
+            }
+
+            if (!callSignatures.length) {
+                if (constructSignatures.length) {
+                    error(node, Diagnostics.Value_of_type_0_is_not_callable_Did_you_mean_to_include_new, typeToString(funcType));
+                }
+                else {
+                    error(node, Diagnostics.Cannot_invoke_an_expression_whose_type_lacks_a_call_signature);
+                }
+                return resolveErrorCall(node);
+            }
+            return resolveCall(node, callSignatures, candidatesOutArray);
+        }
+
         // candidatesOutArray is passed by signature help in the language service, and collectCandidates
         // must fill it up with the appropriate candidate signatures
         function getResolvedSignature(node: CallLikeExpression, candidatesOutArray?: Signature[]): Signature {
@@ -7095,6 +7249,9 @@ module ts {
                 }
                 else if (node.kind === SyntaxKind.TaggedTemplateExpression) {
                     links.resolvedSignature = resolveTaggedTemplateExpression(<TaggedTemplateExpression>node, candidatesOutArray);
+                }
+                else if (node.kind === SyntaxKind.JSXElement) {
+                    links.resolvedSignature = resolveJSXElement(<JSXElement>node, candidatesOutArray);
                 }
                 else {
                     Debug.fail("Branch in 'getResolvedSignature' should be unreachable.");
@@ -7987,6 +8144,7 @@ module ts {
                 case SyntaxKind.TemplateExpression:
                     return checkTemplateExpression(<TemplateExpression>node);
                 case SyntaxKind.StringLiteral:
+                case SyntaxKind.JSXText:
                 case SyntaxKind.NoSubstitutionTemplateLiteral:
                     return stringType;
                 case SyntaxKind.RegularExpressionLiteral:
@@ -8034,6 +8192,16 @@ module ts {
                 case SyntaxKind.YieldExpression:
                     checkYieldExpression(<YieldExpression>node);
                     return unknownType;
+                case SyntaxKind.JSXElement:
+                    return checkJSXElement(<JSXElement>node, contextualMapper);
+                case SyntaxKind.JSXOpeningElement:
+                    return checkJSXOpeningElement(<JSXOpeningElement>node, contextualMapper);
+                case SyntaxKind.JSXTag:
+                    return checkJSXTag((<JSXTag>node));
+                case SyntaxKind.JSXExpression:
+                    if ((<JSXExpression>node).expression) {
+                        return checkExpression((<JSXExpression>node).expression);
+                    }
             }
             return unknownType;
         }
@@ -8214,7 +8382,8 @@ module ts {
                     case SyntaxKind.FunctionExpression:
                     case SyntaxKind.FunctionDeclaration:
                     case SyntaxKind.ArrowFunction:
-                    case SyntaxKind.ObjectLiteralExpression: return false;
+                    case SyntaxKind.ObjectLiteralExpression:
+                    case SyntaxKind.JSXElement: return false;
                     default: return forEachChild(n, containsSuperCall);
                 }
             }
@@ -10801,6 +10970,11 @@ module ts {
                 case SyntaxKind.EnumDeclaration:
                 case SyntaxKind.EnumMember:
                 case SyntaxKind.ExportAssignment:
+                case SyntaxKind.JSXElement:
+                case SyntaxKind.JSXOpeningElement:
+                case SyntaxKind.JSXAttribute:
+                case SyntaxKind.JSXSpreadAttribute:
+                case SyntaxKind.JSXExpression:
                 case SyntaxKind.SourceFile:
                     forEachChild(node, checkFunctionExpressionBodies);
                     break;
@@ -11163,7 +11337,7 @@ module ts {
                 meaning |= SymbolFlags.Alias;
                 return resolveEntityName(<EntityName>entityName, meaning);
             }
-            else if (isExpression(entityName)) {
+            else if (isExpression(entityName) || entityName.parent.kind === SyntaxKind.JSXTag) {
                 if (nodeIsMissing(entityName)) {
                     // Missing entity name.
                     return undefined;
@@ -12344,6 +12518,29 @@ module ts {
                     else {
                         return grammarErrorOnNode(name, Diagnostics.An_object_literal_cannot_have_property_and_accessor_with_the_same_name);
                     }
+                }
+            }
+        }
+
+        function checkGrammarJSXElement(node: JSXElement) {
+            const seen: Map<boolean> = {};
+            for (let attr of node.openingElement.attributes) {
+                if (attr.kind === SyntaxKind.JSXSpreadAttribute) {
+                    continue;
+                }
+
+                let jsxAttr = (<JSXAttribute>attr);
+                let name = jsxAttr.name;
+                if (!hasProperty(seen, name.text)) {
+                    seen[name.text] = true;
+                }
+                else {
+                    return grammarErrorOnNode(name, Diagnostics.JSX_elements_cannot_have_multiple_attributes_with_the_same_name);
+                }
+
+                let initializer = jsxAttr.initializer;
+                if (initializer && initializer.kind === SyntaxKind.JSXExpression && !(<JSXExpression>initializer).expression) {
+                    return grammarErrorOnNode(jsxAttr.initializer, Diagnostics.JSX_attributes_must_only_be_assigned_a_non_empty_expression);
                 }
             }
         }
